@@ -210,13 +210,16 @@ class ScreenController(object):
       self.__draw_sphere(self.command_parser.current_points[-1])
       self.__draw_line([self.command_parser.current_points[-1], self.command_parser.last_point])
 
-    # Predictive line
-
     # Plot the polygons
 
     gl.glColor4f(BLUE[0], BLUE[1], BLUE[2], 0.7)
     for poly in self.command_parser.polygons:
       self.__draw_polygon(poly)
+
+    # Plot the curves
+    gl.glColor4f(BLUE[0], BLUE[1], BLUE[2], 0.7)
+    for curve in self.command_parser.curves:
+      self.__draw_line(curve)
 
     # Draw status texts
     if self.command_parser.mode == SS_POLYGON_MODE:
