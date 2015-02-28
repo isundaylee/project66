@@ -1,4 +1,5 @@
 import math
+import random
 
 from sympy.solvers import solve
 from sympy import Symbol
@@ -6,25 +7,40 @@ from sympy import Symbol
 class CoordinateParser(object):
   def __init__(self, side, height):
     super(CoordinateParser, self).__init__()
-    self.side = side
-    self.height = height
+    self.side = float(side)
+    self.height = float(height)
 
   def parse(self, da, db, dc):
-    x = Symbol('x', real=True)
-    y = Symbol('y', real=True)
-    z = Symbol('z', real=True)
+    l = self.side
+    h = self.height
 
-    eq1 = (self.height - z) ** 2 + x ** 2 + y ** 2 - da ** 2
-    eq2 = (self.height - z) ** 2 + (0.5 * self.side - x) ** 2 + (math.sqrt(0.75) * self.side - y) ** 2 - db ** 2
-    eq3 = (self.height - z) ** 2 + (self.side - x) ** 2 + y ** 2 - dc ** 2
+    delta = - da ** 4 * l ** 2 + da ** 2 * db ** 2 * l ** 2 - db ** 4 * l ** 2 \
+            + da ** 2 * dc ** 2 * l ** 2 + db ** 2 * dc ** 2 * l ** 2 - dc ** 4 * l ** 2 \
+            + da ** 2 * l ** 4 + db ** 2 * l ** 4 + dc ** 2 * l ** 4 - l ** 6
 
-    raw_sols = solve([eq1, eq2, eq3])
-    sols = filter(lambda s:
-      (s[z] > 0 and s[z] < self.height),
-      raw_sols
+    if delta < 0:
+      return None
+    else:
+      x = (da ** 2 - dc ** 2 + l ** 2) / (2 * l)
+      y = (da ** 2 - 2 * db ** 2 + dc ** 2 + l ** 2) / (math.sqrt(12) * l)
+      z = (3 * h * l ** 2 - math.sqrt(3 * delta)) / (3 * l ** 2)
+
+      return (x, y, z)
+
+  def __distance(self, p1, p2):
+    return math.sqrt((p1[0] - p2[0]) ** 2 + (p1[1] - p2[1]) ** 2 + (p1[2] - p2[2])** 2)
+
+  def generate_random_point(self):
+    x = random.random() * self.side
+    y = random.random() * self.side
+    z = random.random() * self.height
+
+    p = (x, y, z)
+
+    return (
+      self.__distance(p, (0, 0, self.height)),
+      self.__distance(p, (self.side, 0, self.height)),
+      self.__distance(p, (0.5 * self.side, math.sqrt(0.75) * self.side, self.height)),
     )
 
-    if len(sols) > 0:
-      return (sols[0][x], sols[0][y], sols[0][z])
-    else:
-      return None
+
