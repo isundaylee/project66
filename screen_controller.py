@@ -3,16 +3,20 @@ import OpenGL.GLU as glu
 import OpenGL.GLUT as glut
 import vispy.gloo as gloo
 import vispy.app as app
+import ctypes
 
 import math
 
-from command_parser import CommandParser
+from command_parser import *
 from coordinate_parser import CoordinateParser
 
 GREEN = (0, 0.8, 0)
 YELLOW = (1, 243.0 / 255, 71.0 / 255)
 BLUE = (10.0 / 255, 124.0 / 255, 1)
 RED = (1, 0, 0)
+
+WIDTH = 1280
+HEIGHT = 800
 
 class ScreenController(object):
 
@@ -29,7 +33,7 @@ class ScreenController(object):
     glut.glutInit()
     glut.glutInitDisplayMode(glut.GLUT_DOUBLE | glut.GLUT_RGBA)
     glut.glutCreateWindow('Hello, triangles! ')
-    glut.glutReshapeWindow(1280, 800)
+    glut.glutReshapeWindow(WIDTH, HEIGHT)
     glut.glutReshapeFunc(self.__reshape)
     glut.glutDisplayFunc(self.__display)
     glut.glutIdleFunc(self.__idle)
@@ -133,6 +137,20 @@ class ScreenController(object):
 
     gl.glEnd()
 
+  def __draw_text(self, x, y, text):
+      blending = False
+      if gl.glIsEnabled(gl.GL_BLEND):
+          blending = True
+
+      gl.glColor3f(1, 1, 1)
+      gl.glWindowPos2f(x,y)
+
+      for ch in text:
+          glut.glutBitmapCharacter(glut.GLUT_BITMAP_9_BY_15, ctypes.c_int(ord(ch)))
+
+      if not blending:
+          gl.glDisable(gl.GL_BLEND)
+
   def __display(self):
     gl.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT)
 
@@ -199,6 +217,10 @@ class ScreenController(object):
     gl.glColor4f(BLUE[0], BLUE[1], BLUE[2], 0.7)
     for poly in self.command_parser.polygons:
       self.__draw_polygon(poly)
+
+    # Draw status texts
+    if self.command_parser.mode == SS_POLYGON_MODE:
+      self.__draw_text(20, HEIGHT - 25, "POLYGON MODE")
 
     glut.glutSwapBuffers()
 
