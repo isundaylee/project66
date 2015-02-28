@@ -6,6 +6,7 @@ import vispy.app as app
 import ctypes
 
 import math
+import random
 
 from command_parser import *
 from coordinate_parser import CoordinateParser
@@ -239,6 +240,12 @@ class ScreenController(object):
 
   def __idle(self):
     self.__parse_sample_commands()
+    self.command_parser.process("point %lf %lf %lf" % self.coordinate_parser.generate_random_point())
+    if random.random() < 0.05:
+      self.command_parser.process("click")
+    if random.random() < 0.01:
+      self.command_parser.process("hold")
+    glut.glutPostRedisplay()
 
   def __reshape(self, width, height):
     gl.glViewport(0, 0, width, height)
