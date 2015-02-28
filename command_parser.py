@@ -43,7 +43,8 @@ class CommandParser(object):
         self.current_points.append(self.last_point)
       else:
         if self.curve_tracing:
-          self.curves.append(self.current_points)
+          if len(self.current_points) >= 2:
+            self.curves.append(self.current_points)
         self.curve_tracing = (not self.curve_tracing)
     elif type == 'hold':
       if self.mode == SS_POLYGON_MODE:
