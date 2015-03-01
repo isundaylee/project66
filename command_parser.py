@@ -33,6 +33,7 @@ class CommandParser(object):
     self.curves = []
     self.samples = []
     self.curve_tracing = False
+    self.nearby_point = None
 
     self.das = []
     self.dbs = []

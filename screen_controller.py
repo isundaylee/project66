@@ -44,8 +44,10 @@ class ScreenController(object):
 
     gl.glClearColor(0, 0, 0, 1)
     gl.glShadeModel(gl.GL_SMOOTH)
-    gl.glEnable(gl.GL_CULL_FACE)
+    gl.glLineWidth(BASE_WIDTH * 1000)
+    gl.glDisable(gl.GL_CULL_FACE)
     gl.glEnable(gl.GL_DEPTH_TEST)
+    gl.glEnable(gl.GL_LINE_SMOOTH)
     gl.glEnable(gl.GL_BLEND)
     gl.glBlendFunc(gl.GL_SRC_ALPHA, gl.GL_ONE_MINUS_SRC_ALPHA)
     # gl.glEnable(gl.GL_LIGHTING)
@@ -71,6 +73,8 @@ class ScreenController(object):
     glu.gluLookAt(
       self.side / 2, self.height / 2, 2,
       self.side / 2, self.height / 2, 0,
+      # 2, 0.5 * self.height, -math.sqrt(0.75 / 4) * self.side,
+      # 0, 0.5 * self.height, -math.sqrt(0.75 / 4) * self.side,
       0, 1, 0
     )
     gl.glPushMatrix()
@@ -125,7 +129,7 @@ class ScreenController(object):
   def __draw_polygon(self, points):
     points.append(points[0])
 
-    gl.glBegin(gl.GL_TRIANGLE_STRIP)
+    gl.glBegin(gl.GL_TRIANGLE_FAN)
 
     for rp in points:
       p = self.tr(rp[0], rp[1], rp[2])
@@ -203,8 +207,9 @@ class ScreenController(object):
 
     # Plot the current point
 
-    gl.glColor3f(RED[0], RED[1], RED[2])
-    self.__draw_sphere(self.command_parser.last_point, radius=0.03)
+    if self.command_parser.mode == SS_POLYGON_MODE:
+      gl.glColor3f(RED[0], RED[1], RED[2])
+      self.__draw_sphere(self.command_parser.last_point, radius=0.03)
 
     # Plot the pending selected points
 
@@ -231,6 +236,15 @@ class ScreenController(object):
       self.__draw_text(20, HEIGHT - 25, "POLYGON MODE")
     else:
       self.__draw_text(20, HEIGHT - 25, "CURVE MODE")
+
+    if self.command_parser.nearby_point:
+      self.__draw_text(20, HEIGHT - 50, "NEARBY POINT DETECTED")
+
+
+    if self.command_parser.last_point:
+      self.__draw_text(WIDTH - 140, HEIGHT - 25, str(self.command_parser.last_point[0]))
+      self.__draw_text(WIDTH - 140, HEIGHT - 50, str(self.command_parser.last_point[1]))
+      self.__draw_text(WIDTH - 140, HEIGHT - 75, str(self.command_parser.last_point[2]))
 
     glut.glutSwapBuffers()
 
