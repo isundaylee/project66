@@ -19,6 +19,8 @@ RED = (1, 0, 0)
 WIDTH = 1280
 HEIGHT = 800
 
+BASE_WIDTH = 0.2
+
 class ScreenController(object):
 
   sample_commands_parsed = False
@@ -67,7 +69,7 @@ class ScreenController(object):
     glu.gluPerspective(30, 1, 1, 40)
     gl.glMatrixMode(gl.GL_MODELVIEW)
     glu.gluLookAt(
-      self.side / 2, self.height / 2, 15,
+      self.side / 2, self.height / 2, 2,
       self.side / 2, self.height / 2, 0,
       0, 1, 0
     )
@@ -83,7 +85,7 @@ class ScreenController(object):
   def fr(self, x, y, z):
     return (x, z, -y)
 
-  def __draw_cylinder(self, p1, p2, radius=0.02):
+  def __draw_cylinder(self, p1, p2, radius=BASE_WIDTH*0.02):
     p1, p2 = self.tr(p1[0], p1[1], p1[2]), self.tr(p2[0], p2[1], p2[2])
 
     dx = float(p2[0] - p1[0])
@@ -109,7 +111,7 @@ class ScreenController(object):
 
     gl.glPopMatrix()
 
-  def __draw_sphere(self, p1, radius=0.05):
+  def __draw_sphere(self, p1, radius=BASE_WIDTH*0.05):
     p1 = self.tr(p1[0], p1[1], p1[2])
 
     gl.glPushMatrix()
@@ -121,7 +123,9 @@ class ScreenController(object):
     gl.glPopMatrix()
 
   def __draw_polygon(self, points):
-    gl.glBegin(gl.GL_LINE_LOOP)
+    points.append(points[0])
+
+    gl.glBegin(gl.GL_TRIANGLE_STRIP)
 
     for rp in points:
       p = self.tr(rp[0], rp[1], rp[2])
@@ -225,6 +229,8 @@ class ScreenController(object):
     # Draw status texts
     if self.command_parser.mode == SS_POLYGON_MODE:
       self.__draw_text(20, HEIGHT - 25, "POLYGON MODE")
+    else:
+      self.__draw_text(20, HEIGHT - 25, "CURVE MODE")
 
     glut.glutSwapBuffers()
 
@@ -239,12 +245,14 @@ class ScreenController(object):
       f.close()
 
   def __idle(self):
-    self.__parse_sample_commands()
-    self.command_parser.process("point %lf %lf %lf" % self.coordinate_parser.generate_random_point())
-    if random.random() < 0.05:
-      self.command_parser.process("click")
-    if random.random() < 0.01:
-      self.command_parser.process("hold")
+    # self.__parse_sample_commands()
+    # self.command_parser.process("point %lf %lf %lf" % self.coordinate_parser.generate_random_point())
+    # if random.random() < 0.05:
+      # self.command_parser.process("click")
+    # if random.random() < 0.01:
+      # self.command_parser.process("hold")
+
+    self.command_parser.fetch_and_process()
     glut.glutPostRedisplay()
 
   def __reshape(self, width, height):
@@ -253,3 +261,4 @@ class ScreenController(object):
   def __keyboard(self, key, x, y):
     if key == '\033':
       exit()
+#
