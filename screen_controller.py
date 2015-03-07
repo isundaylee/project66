@@ -58,8 +58,8 @@ class ScreenController(object):
     glu.gluQuadricNormals(self.quadric, glu.GLU_SMOOTH)
     glu.gluQuadricTexture(self.quadric, gl.GL_TRUE)
 
-    lightP= self.tr(self.side/2, -self.side/2, self.side/2)
-    lightPosition = [lightP[0],lightP[1],lightP[2],0.5]
+    lightP= self.tr(self.side/2, self.side/2, self.side/2)
+    lightPosition = [lightP[0],lightP[1],lightP[2],0.0]
     lightColor = [WHITE[0], WHITE[1], WHITE[2], 1]
 
     """gl.glLightfv(gl.GL_LIGHT0, gl.GL_POSITION, lightPosition)
@@ -148,7 +148,7 @@ class ScreenController(object):
       sp=solid[i]
       ep=solid[i+1]
       print i,sp,ep
-      self.__draw_sphere(sp,radius=sizes[i])
+      self.__draw_sphere(sp,radius=(1)*sizes[i])
       self.__draw_cylinder(sp,ep,radius=sizes[i],radius2=sizes[i+1] )
 
   def __draw_polygon(self, points):
@@ -265,7 +265,7 @@ class ScreenController(object):
     for curve in self.command_parser.curves:
       self.__draw_line(curve)
 
-    gl.glColor4f(RED[0], RED[1], RED[2], 0.7)
+    gl.glColor4f(RED[0], RED[1], RED[2], 1)
     for solid in self.command_parser.solids:
       self.__draw_solid(solid[0],solid[1])
     # Draw status texts
