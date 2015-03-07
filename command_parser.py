@@ -194,10 +194,52 @@ class CommandParser(object):
     nclick=int(parts[3])
     if clicked>self.lastClick:
       self.lastClick=clicked
-    if state==0:
+      if nclick>1:
+        if self.mode == SS_POLYGON_MODE:
+          if self.nearby_point:
+            self.last_point = self.nearby_point
+            self.current_points.append(self.last_point)
+      if nclick==1:
+        if self.mode == SS_POLYGON_MODE:
+          self.current_points.append(self.last_point)
+        elif self.mode==SS_CURVE_MODE:
+          if self.curve_tracing:
+            if len(self.current_points) >= 2:
+              self.curves.append(self.current_points)
+          self.curve_tracing = (not self.curve_tracing)
+        elif self.mode==SS_SCULPT_MODE:
+          if self.sculpting:
+            if len(self.current_points) >= 2:
+              self.solids.append((self.current_points,self.current_sizes))
+          self.sculpting = (not self.sculpting )
+          self.current_points=[]
+          self.current_sizes=[]
+        elif self.mode == SS_EXTRUDE_MODE:
+          if self.extruding:
+            self.extrusions.append((self.extruding_polygon, minus(self.last_point, self.extruding_origin)))
+
+            eps = self.calculate_extrusion_extra_polygons(self.extrusions[-1])
+            for p in eps:
+              self.polygons.append(p)
+
+            self.extruding = False
+        else:
+          if self.extruding_candidate:
+            self.extruding_origin = self.last_point
+            self.extruding_polygon = self.extruding_candidate
+            self.extruding = True
+      if nclick == -1:
+        if self.mode == SS_POLYGON_MODE:
+          if len(self.current_points) >= 3:
+            self.polygons.append(self.current_points[:])
+          self.current_points = []
+          
+    if state==2:
       self.brush_radius=0.01+0.05*(angle/50.0)
     elif state==1:
       self.color=(angle/10)%5
+    elif state==0:
+      self.mode=(angle/20)%4
 
   def calculate_extrusion_extra_polygons(self, e):
     polys = []
@@ -248,40 +290,6 @@ class CommandParser(object):
         elif self.mode ==SS_SCULPT_MODE:
           self.current_points.append(point)
           self.current_sizes.append(self.brush_radius)
-    elif type == 'doubleclick':
-      if self.mode == SS_POLYGON_MODE:
-        if self.nearby_point:
-          self.last_point = self.nearby_point
-          self.current_points.append(self.last_point)
-    elif type == 'click':
-      if self.mode == SS_POLYGON_MODE:
-        self.current_points.append(self.last_point)
-      elif self.mode==SS_CURVE_MODE:
-        if self.curve_tracing:
-          if len(self.current_points) >= 2:
-            self.curves.append(self.current_points)
-        self.curve_tracing = (not self.curve_tracing)
-      elif self.mode==SS_SCULPT_MODE:
-        if self.sculpting:
-          if len(self.current_points) >= 2:
-            self.solids.append((self.current_points,self.current_sizes))
-        self.sculpting = (not self.sculpting )
-        self.current_points=[]
-        self.current_sizes=[]
-      elif self.mode == SS_EXTRUDE_MODE:
-        if self.extruding:
-          self.extrusions.append((self.extruding_polygon, minus(self.last_point, self.extruding_origin)))
-
-          eps = self.calculate_extrusion_extra_polygons(self.extrusions[-1])
-          for p in eps:
-            self.polygons.append(p)
-
-          self.extruding = False
-        else:
-          if self.extruding_candidate:
-            self.extruding_origin = self.last_point
-            self.extruding_polygon = self.extruding_candidate
-            self.extruding = True
     elif type == 'hold':
       if self.mode == SS_POLYGON_MODE:
         if len(self.current_points) >= 3:
