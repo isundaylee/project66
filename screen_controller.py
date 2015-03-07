@@ -73,13 +73,23 @@ class ScreenController(object):
     gl.glLightf(gl.GL_LIGHT0, gl.GL_CONSTANT_ATTENUATION, 0.01)
     gl.glLightf(gl.GL_LIGHT0, gl.GL_LINEAR_ATTENUATION, 0.05)"""
 
+    lightP= self.tr(-self.side/2, -self.side/2, self.side/2)
+    lightPosition2 = [lightP[0],lightP[1],lightP[2],0.0]
+
     gl.glLightfv(gl.GL_LIGHT0, gl.GL_AMBIENT, gl.GLfloat_4(0.0, 1.0, 0.0, 1.0))
     gl.glLightfv(gl.GL_LIGHT0, gl.GL_DIFFUSE, lightColor)
     gl.glLightfv(gl.GL_LIGHT0, gl.GL_SPECULAR, gl.GLfloat_4(1.0, 1.0, 1.0, 1.0))
     gl.glLightfv(gl.GL_LIGHT0, gl.GL_POSITION, lightPosition)
+
+    gl.glLightfv(gl.GL_LIGHT1, gl.GL_AMBIENT, gl.GLfloat_4(0.0, 1.0, 0.0, 1.0))
+    gl.glLightfv(gl.GL_LIGHT1, gl.GL_DIFFUSE, lightColor)
+    gl.glLightfv(gl.GL_LIGHT1, gl.GL_SPECULAR, gl.GLfloat_4(1.0, 1.0, 1.0, 1.0))
+    gl.glLightfv(gl.GL_LIGHT1, gl.GL_POSITION, lightPosition2)
+
     gl.glLightModelfv(gl.GL_LIGHT_MODEL_AMBIENT, gl.GLfloat_4(0.2, 0.2, 0.2, 1.0))
     gl.glEnable(gl.GL_LIGHTING)
     gl.glEnable(gl.GL_LIGHT0)
+    gl.glEnable(gl.GL_LIGHT1)
     gl.glColorMaterial(gl.GL_FRONT, gl.GL_DIFFUSE)
 
 
