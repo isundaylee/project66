@@ -48,6 +48,7 @@ class ScreenController(object):
     glut.glutIdleFunc(self.__idle)
     glut.glutKeyboardFunc(self.__keyboard)
 
+    gl.glLineWidth(0.001);
     gl.glClearColor(0, 0, 0, 1)
     # gl.glShadeModel(gl.GL_SMOOTH)
     gl.glLineWidth(BASE_WIDTH * 1000)
@@ -174,7 +175,7 @@ class ScreenController(object):
 
     gl.glEnd()
 
-    gl.glColor4f(0.5 * r, 0.5 * g, 0.5 * b, a)
+    gl.glColor4f(0.3 * r, 0.3 * g, 0.3 * b, a)
 
     gl.glBegin(gl.GL_LINE_LOOP)
     for rp in points:
@@ -406,9 +407,9 @@ class ScreenController(object):
     if key == chr(113): #zoom in(q)
         self.zoom = self.zoom *0.95
     if key == chr(101): #zoom out(e)
-        self.zoom = self.zoom *1.05 
+        self.zoom = self.zoom *1.05
     if key == chr(111): #output as .obj
-        self.outputfile()   
+        self.outputfile()
     gl.glMatrixMode(gl.GL_MODELVIEW)
     gl.glLoadIdentity()
     p1 =  self.turn(self.theta,self.phi,self.zoom)

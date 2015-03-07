@@ -5,6 +5,7 @@ from geometry import dot, cross, norm, multi, minus, plus
 
 import serial
 import math
+import os
 
 SS_POLYGON_MODE = 0
 SS_CURVE_MODE = 1
@@ -49,7 +50,12 @@ class CommandParser(object):
     self.extruding_candidate = None
     # self.command_retriever = SerialCommandRetriever(PORT)
     self.command_retriever = WifiCommandRetriever(WIFI_IP, WIFI_PORT)
-    self.handle = SerialCommandRetriever(HPORT)
+
+    if os.path.exists(HPORT):
+      self.handle = SerialCommandRetriever(HPORT)
+    else:
+      self.handle = None
+
     self.brush_radius=0.05
 
     self.das = []
@@ -64,20 +70,20 @@ class CommandParser(object):
     return self.coordinate_parser.parse(float(p[0]), float(p[1]), float(p[2]))
 
   def fetch_and_process(self):
-    print(len(self.polygons))
     commands = self.command_retriever.fetch()
-    hcommands = self.handle.fetch()
+    if self.handle != None:
+      hcommands = self.handle.fetch()
 
     for c in commands:
       print('[LOG] ' + c)
 
-    for c in hcommands:
-      print('[HLOG] ' + c)
+    if self.handle != None:
+      for c in hcommands:
+        print('[HLOG] ' + c)
+      self.handle.clear()
+      for c in hcommands:
+        self.hprocess(c)
 
-    self.handle.clear()
-
-    for c in hcommands:
-      self.hprocess(c)
     for c in commands:
       self.process(c)
 
@@ -189,7 +195,7 @@ class CommandParser(object):
       self.lastClick=clicked
     if state==0:
       self.brush_radius=0.01+0.05*(angle/50.0)
-      
+
   def calculate_extrusion_extra_polygons(self, e):
     polys = []
     poly, vec = e
