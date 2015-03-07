@@ -36,6 +36,7 @@ class CommandParser(object):
     self.current_points = []
     self.current_sizes = []
     self.polygons = []
+    self.color=0
     self.curves = []
     self.lastClick = 0
     self.solids = []
@@ -195,6 +196,8 @@ class CommandParser(object):
       self.lastClick=clicked
     if state==0:
       self.brush_radius=0.01+0.05*(angle/50.0)
+    elif state==1:
+      self.color=(angle/10)%5
 
   def calculate_extrusion_extra_polygons(self, e):
     polys = []

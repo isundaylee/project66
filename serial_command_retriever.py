@@ -15,7 +15,7 @@ class SerialCommandRetriever(object):
     super(SerialCommandRetriever, self).__init__()
     self.port = port
     self.data = ""
-    self.serial = serial.Serial(self.port, baudrate=9600, timeout=0.01)
+    self.serial = serial.Serial(self.port, baudrate=115200, timeout=0.01)
 
   def clear(self):
     self.serial.flushInput()

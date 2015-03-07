@@ -12,6 +12,8 @@ from geometry import minus, plus
 from command_parser import *
 from coordinate_parser import CoordinateParser
 
+COLZ=((0, 0.8, 0), (1, 243.0 / 255, 71.0 / 255), (10.0 / 255, 124.0 / 255, 1), (1, 0, 0), (1,1,1) )
+
 GREEN = (0, 0.8, 0)
 YELLOW = (1, 243.0 / 255, 71.0 / 255)
 BLUE = (10.0 / 255, 124.0 / 255, 1)
@@ -269,13 +271,16 @@ class ScreenController(object):
     self.__draw_sphere((self.side, 0, self.height))
     self.__draw_sphere((0.5 * self.side, math.sqrt(0.75) * self.side, self.height))
 
+
     # Plot the current point
+
+    CUR=COLZ[self.command_parser.color]
 
     if self.command_parser.mode == SS_POLYGON_MODE:
       gl.glColor3f(RED[0], RED[1], RED[2])
       self.__draw_sphere(self.command_parser.last_point, radius=0.03)
     elif self.command_parser.mode == SS_SCULPT_MODE:
-      gl.glColor3f(GREEN[0], GREEN[1], GREEN[2])
+      gl.glColor3f(CUR[0], CUR[1], CUR[2])
       self.__draw_sphere(self.command_parser.last_point, radius=self.command_parser.brush_radius)
 
     # Plot the pending selected points
@@ -304,7 +309,7 @@ class ScreenController(object):
     for curve in self.command_parser.curves:
       self.__draw_line(curve)
 
-    gl.glColor4f(RED[0], RED[1], RED[2], 1)
+    gl.glColor4f(CUR[0], CUR[1], CUR[2], 1)
     for solid in self.command_parser.solids:
       self.__draw_solid(solid[0],solid[1])
 
