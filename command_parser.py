@@ -16,6 +16,7 @@ NEARBY_THRESHOLD = 0.05
 EC_CANDIDATE_THRESHOLD = 0.05
 
 PORT = '/dev/tty.usbmodem1413'
+HPORT = '/dev/cu.usbserial-A602KCO2'
 WIFI_IP = '18.189.110.81'
 WIFI_PORT = 23
 
@@ -35,6 +36,7 @@ class CommandParser(object):
     self.current_sizes = []
     self.polygons = []
     self.curves = []
+    self.lastClick = 0
     self.solids = []
     self.extrusions = []
     self.samples = []
@@ -47,6 +49,7 @@ class CommandParser(object):
     self.extruding_candidate = None
     # self.command_retriever = SerialCommandRetriever(PORT)
     self.command_retriever = WifiCommandRetriever(WIFI_IP, WIFI_PORT)
+    self.handle = SerialCommandRetriever(HPORT)
     self.brush_radius=0.05
 
     self.das = []
@@ -62,10 +65,18 @@ class CommandParser(object):
 
   def fetch_and_process(self):
     commands = self.command_retriever.fetch()
+    hcommands = self.handle.fetch()
 
     for c in commands:
       print('[LOG] ' + c)
 
+    for c in hcommands:
+      print('[HLOG] ' + c)
+
+    self.handle.clear()
+
+    for c in hcommands:
+      self.hprocess(c)
     for c in commands:
       self.process(c)
 
@@ -166,6 +177,17 @@ class CommandParser(object):
     dc = self.__extract_sample(self.dcs)
 
     return self.__parse_point((da, db, dc))
+
+  def hprocess(self, command):
+    parts = command.split()
+    state=int(parts[0])
+    angle=int(parts[1])
+    clicked=int(parts[2])
+    nclick=int(parts[3])
+    if clicked>self.lastClick:
+      self.lastClick=clicked
+    if state==0:
+      self.brush_radius=0.01+0.05*(angle/50.0)
 
   def process(self, command):
     parts = command.split()

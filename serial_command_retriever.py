@@ -17,11 +17,14 @@ class SerialCommandRetriever(object):
     self.data = ""
     self.serial = serial.Serial(self.port, baudrate=9600, timeout=0.01)
 
+  def clear(self):
+    self.serial.flushInput()
+
   def fetch(self):
     commands = []
 
     if self.serial.inWaiting() > 0:
-      self.data = self.data + self.serial.read(16)
+      self.data = self.data + self.serial.readline()
 
       for c in INTERRUPT_COMMANDS:
         if c in self.data:
