@@ -13,10 +13,14 @@ SS_EXTRUDE_MODE = 3
 
 SAMPLE_SIZE = 5
 NEARBY_THRESHOLD = 0.05
+EC_CANDIDATE_THRESHOLD = 0.05
 
 PORT = '/dev/tty.usbmodem1413'
 WIFI_IP = '18.189.110.81'
 WIFI_PORT = 23
+
+EPSILON = 1e-9
+INFINITY = 1e10
 
 class CommandParser(object):
 
@@ -99,40 +103,53 @@ class CommandParser(object):
       return None
 
   def __calculate_point_triangle_distance(self, point, triangle):
-    print(triangle)
     def orientation(point, a, b, normal):
       sig_norm = cross(minus(b, a), normal)
       return dot(sig_norm, minus(point, a))
+
     a, b, c = triangle
     normal = cross(minus(c, a), minus(b, a))
-    print('normal: ', normal)
     unormal = multi(1.0 / norm(normal), normal)
-    print('unormal: ', unormal)
     d = abs(dot(minus(point, a), unormal))
 
     o1 = orientation(point, a, b, normal)
     o2 = orientation(point, b, c, normal)
     o3 = orientation(point, c, a, normal)
 
-    print(o1, o2, o3)
-
-    return True, d
+    return (o1 >= -EPSILON and o2 >= -EPSILON and o3 >= -EPSILON), d
 
   def __calculate_point_polygon_distance(self, point, polygon):
     i1 = 0
-    within, dist = None, None
-    print(polygon)
-    print(len(polygon))
+    within, dist = False, INFINITY
+
     for i2 in range(1, len(polygon) - 1):
       i3 = i2 + 1
       triangle = [polygon[i1], polygon[i2], polygon[i3]]
-      within, d = self.__calculate_point_triangle_distance(point, triangle)
+      w, d = self.__calculate_point_triangle_distance(point, triangle)
 
+      if w:
+        within = True
+        if d < dist:
+          dist = d
+
+    return within, dist
 
   def __fetch_extruding_candidate(self, point):
+    minp = None
+    mind = INFINITY
+
     for p in self.polygons:
       within, d = self.__calculate_point_polygon_distance(point, p)
-    pass
+
+      if within:
+        if d < mind:
+          mind = d
+          minp = p
+
+    if mind <= EC_CANDIDATE_THRESHOLD:
+      return minp
+    else:
+      return None
 
   def __insert_and_fetch_sample(self, p):
     self.das.append(float(p[0]))
@@ -163,15 +180,24 @@ class CommandParser(object):
         print('        parts')
       else:
         self.last_point = self.__insert_and_fetch_sample(parts)
-        np = self.__fetch_nearby_point(self.last_point)
-        ec = self.__fetch_extruding_candidate(self.last_point)
 
-        if np:
-          self.nearby_point = np
-          self.command_retriever.send('n')
-        else:
-          self.nearby_point = None
-          self.command_retriever.send('x')
+        if self.mode == SS_POLYGON_MODE:
+          np = self.__fetch_nearby_point(self.last_point)
+          if np:
+            self.nearby_point = np
+            self.command_retriever.send('n')
+          else:
+            self.nearby_point = None
+            self.command_retriever.send('x')
+
+        if self.mode == SS_EXTRUDE_MODE:
+          ec = self.__fetch_extruding_candidate(self.last_point)
+          if ec:
+            self.extruding_candidate = ec
+            self.command_retriever.send('n')
+          else:
+            self.extruding_candidate = None
+            self.command_retriever.send('x')
 
         if self.mode == SS_CURVE_MODE:
           self.current_points.append(point)
@@ -200,7 +226,7 @@ class CommandParser(object):
         self.current_sizes=[]
       elif self.mode == SS_EXTRUDE_MODE:
         if self.extruding:
-          self.extrusions.append((self.extruding_polygon, (self.last_point - self.extruding)))
+          self.extrusions.append((self.extruding_polygon, minus(self.last_point, self.extruding_origin)))
           self.extruding = False
         else:
           if self.extruding_candidate:

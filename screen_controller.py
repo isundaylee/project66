@@ -7,6 +7,7 @@ import ctypes
 
 import math
 import random
+from geometry import minus, plus
 
 from command_parser import *
 from coordinate_parser import CoordinateParser
@@ -33,7 +34,7 @@ class ScreenController(object):
     self.side = float(side)
     self.height = float(height)
     self.phi = 0
-    self.theta = 0 
+    self.theta = 0
     self.zoom = 1
     self.point2 = (side/2,side/2,height/2)
 
@@ -192,6 +193,22 @@ class ScreenController(object):
       if not blending:
           gl.glDisable(gl.GL_BLEND)
 
+  def __draw_extrusion(self, extrusion):
+    poly, vec = extrusion
+    new_poly = list(map(lambda v: plus(v, vec), poly))
+
+    self.__draw_polygon(poly)
+    self.__draw_polygon(new_poly)
+
+    gl.glBegin(gl.GL_TRIANGLE_STRIP)
+    for i in range(len(poly)):
+      p = self.tr(poly[i][0], poly[i][1], poly[i][2])
+      np = self.tr(new_poly[i][0], new_poly[i][1], new_poly[i][2])
+
+      gl.glVertex3f(p[0], p[1], p[2])
+      gl.glVertex3f(np[0], np[1], np[2])
+    gl.glEnd()
+
   def __display(self):
     gl.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT)
 
@@ -237,15 +254,6 @@ class ScreenController(object):
     self.__draw_sphere((self.side, 0, self.height))
     self.__draw_sphere((0.5 * self.side, math.sqrt(0.75) * self.side, self.height))
 
-    # Plot the current point
-
-    if self.command_parser.mode == SS_POLYGON_MODE:
-      gl.glColor3f(RED[0], RED[1], RED[2])
-      self.__draw_sphere(self.command_parser.last_point, radius=0.03)
-    elif self.command_parser.mode == SS_SCULPT_MODE:
-      gl.glColor3f(GREEN[0], GREEN[1], GREEN[2])
-      self.__draw_sphere(self.command_parser.last_point, radius=0.03)
-
     # Plot the pending selected points
 
     if self.command_parser.mode != SS_SCULPT_MODE:
@@ -282,15 +290,37 @@ class ScreenController(object):
       self.__draw_text(20, HEIGHT - 25, "CURVE MODE")
     elif self.command_parser.mode==SS_SCULPT_MODE:
       self.__draw_text(20, HEIGHT - 25, "SCULPT MODE")
+    elif self.command_parser.mode == SS_EXTRUDE_MODE:
+      self.__draw_text(20, HEIGHT - 25, "EXTRUDE MODE")
 
-    if self.command_parser.nearby_point:
+    if self.command_parser.mode == SS_POLYGON_MODE and self.command_parser.nearby_point:
       self.__draw_text(20, HEIGHT - 50, "NEARBY POINT DETECTED")
 
+    if self.command_parser.mode == SS_EXTRUDE_MODE and self.command_parser.extruding_candidate:
+      self.__draw_text(20, HEIGHT - 50, "EXTRUDING CANDIDATE DETECTED")
+
+    # Draw the extrusion preview
+    if self.command_parser.mode == SS_EXTRUDE_MODE and self.command_parser.extruding:
+      preview = (self.command_parser.extruding_polygon, minus(self.command_parser.last_point, self.command_parser.extruding_origin))
+      self.__draw_extrusion(preview)
+
+    # Draw the actual extrusions
+    for e in self.command_parser.extrusions:
+      self.__draw_extrusion(e)
 
     if self.command_parser.last_point:
       self.__draw_text(WIDTH - 140, HEIGHT - 25, str(self.command_parser.last_point[0]))
       self.__draw_text(WIDTH - 140, HEIGHT - 50, str(self.command_parser.last_point[1]))
       self.__draw_text(WIDTH - 140, HEIGHT - 75, str(self.command_parser.last_point[2]))
+
+    # Plot the current point
+
+    if self.command_parser.mode == SS_POLYGON_MODE or self.command_parser.mode == SS_EXTRUDE_MODE:
+      gl.glColor3f(RED[0], RED[1], RED[2])
+      self.__draw_sphere(self.command_parser.last_point, radius=0.01)
+    elif self.command_parser.mode == SS_SCULPT_MODE:
+      gl.glColor3f(GREEN[0], GREEN[1], GREEN[2])
+      self.__draw_sphere(self.command_parser.last_point, radius=0.03)
 
     glut.glutSwapBuffers()
 
@@ -339,7 +369,7 @@ class ScreenController(object):
     if key == chr(113): #zoom in(q)
         self.zoom = self.zoom *0.95
     if key == chr(101): #zoom out(e)
-        self.zoom = self.zoom *1.05    
+        self.zoom = self.zoom *1.05
     gl.glMatrixMode(gl.GL_MODELVIEW)
     gl.glLoadIdentity()
     p1 =  self.turn(self.theta,self.phi,self.zoom)

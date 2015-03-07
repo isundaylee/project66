@@ -20,6 +20,7 @@
 #define POLYGON 1
 #define CURVE 2
 #define SCULPT 3
+#define EXTRUDE 4
 
 #define SWITCH_THRESHOLD 50
 #define SWITCH_HOLD_THRESHOLD 500
@@ -121,6 +122,9 @@ void int_curve() {
         comm_println("mode sculpt"); 
       } 
       else if (mode == SCULPT) {
+        mode = EXTRUDE; 
+        comm_println("mode extrude"); 
+      } else if (mode == EXTRUDE) {
         mode = POLYGON; 
         comm_println("mode polygon"); 
       }

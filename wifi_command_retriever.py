@@ -8,6 +8,8 @@ INTERRUPT_COMMANDS = [
   "hold\n",
   "mode polygon\n",
   "mode curve\n",
+  "mode sculpt\n",
+  "mode extrude\n"
 ]
 
 class WifiCommandRetriever(object):
