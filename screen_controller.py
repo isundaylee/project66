@@ -442,5 +442,17 @@ class ScreenController(object):
       # 0, 0.5 * self.height, -math.sqrt(0.75 / 4) * self.side,
       point3[0],point3[2],-point3[1]#v3[0],v3[1],v3[2]
     )
+    if key == chr(114):
+      self.command_parser.polygons = []
+      self.command_parser.curves = []
+      self.command_parser.current_points = []
+      self.command_parser.current_sizes = []
+      self.command_parser.solids = []
+      self.command_parser.extrusions = []
+      self.command_parser.samples = []
+      self.theta = 0
+      self.zoom = 1
+      self.phi = 0
     glut.glutPostRedisplay()
+
 #
