@@ -151,7 +151,8 @@ class ScreenController(object):
       self.__draw_sphere(sp,radius=sizes[i])
       self.__draw_cylinder(sp,ep,radius=sizes[i],radius2=sizes[i+1] )
 
-  def __draw_polygon(self, points):
+  def __draw_polygon(self, op):
+    points = op[:]
     points.append(points[0])
 
     gl.glBegin(gl.GL_TRIANGLE_FAN)

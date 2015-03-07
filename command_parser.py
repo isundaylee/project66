@@ -1,6 +1,7 @@
 from coordinate_parser import CoordinateParser
 from serial_command_retriever import SerialCommandRetriever
 from wifi_command_retriever import WifiCommandRetriever
+from geometry import dot, cross, norm, multi, minus
 
 import serial
 import math
@@ -8,6 +9,7 @@ import math
 SS_POLYGON_MODE = 0
 SS_CURVE_MODE = 1
 SS_SCULPT_MODE = 2
+SS_EXTRUDE_MODE = 3
 
 SAMPLE_SIZE = 5
 NEARBY_THRESHOLD = 0.05
@@ -30,10 +32,15 @@ class CommandParser(object):
     self.polygons = []
     self.curves = []
     self.solids = []
+    self.extrusions = []
     self.samples = []
     self.curve_tracing = False
     self.sculpting = False
     self.nearby_point = None
+    self.extruding = False
+    self.extruding_polygon = None
+    self.extruding_origin = None
+    self.extruding_candidate = None
     # self.command_retriever = SerialCommandRetriever(PORT)
     self.command_retriever = WifiCommandRetriever(WIFI_IP, WIFI_PORT)
     self.brush_radius=0.05
@@ -91,6 +98,42 @@ class CommandParser(object):
     else:
       return None
 
+  def __calculate_point_triangle_distance(self, point, triangle):
+    print(triangle)
+    def orientation(point, a, b, normal):
+      sig_norm = cross(minus(b, a), normal)
+      return dot(sig_norm, minus(point, a))
+    a, b, c = triangle
+    normal = cross(minus(c, a), minus(b, a))
+    print('normal: ', normal)
+    unormal = multi(1.0 / norm(normal), normal)
+    print('unormal: ', unormal)
+    d = abs(dot(minus(point, a), unormal))
+
+    o1 = orientation(point, a, b, normal)
+    o2 = orientation(point, b, c, normal)
+    o3 = orientation(point, c, a, normal)
+
+    print(o1, o2, o3)
+
+    return True, d
+
+  def __calculate_point_polygon_distance(self, point, polygon):
+    i1 = 0
+    within, dist = None, None
+    print(polygon)
+    print(len(polygon))
+    for i2 in range(1, len(polygon) - 1):
+      i3 = i2 + 1
+      triangle = [polygon[i1], polygon[i2], polygon[i3]]
+      within, d = self.__calculate_point_triangle_distance(point, triangle)
+
+
+  def __fetch_extruding_candidate(self, point):
+    for p in self.polygons:
+      within, d = self.__calculate_point_polygon_distance(point, p)
+    pass
+
   def __insert_and_fetch_sample(self, p):
     self.das.append(float(p[0]))
     self.dbs.append(float(p[1]))
@@ -121,6 +164,8 @@ class CommandParser(object):
       else:
         self.last_point = self.__insert_and_fetch_sample(parts)
         np = self.__fetch_nearby_point(self.last_point)
+        ec = self.__fetch_extruding_candidate(self.last_point)
+
         if np:
           self.nearby_point = np
           self.command_retriever.send('n')
@@ -153,10 +198,19 @@ class CommandParser(object):
         self.sculpting = (not self.sculpting )
         self.current_points=[]
         self.current_sizes=[]
+      elif self.mode == SS_EXTRUDE_MODE:
+        if self.extruding:
+          self.extrusions.append((self.extruding_polygon, (self.last_point - self.extruding)))
+          self.extruding = False
+        else:
+          if self.extruding_candidate:
+            self.extruding_origin = self.last_point
+            self.extruding_polygon = self.extruding_candidate
+            self.extruding = True
     elif type == 'hold':
       if self.mode == SS_POLYGON_MODE:
         if len(self.current_points) >= 3:
-          self.polygons.append(self.current_points)
+          self.polygons.append(self.current_points[:])
         self.current_points = []
     elif type == 'mode':
       self.current_points = []
@@ -169,5 +223,8 @@ class CommandParser(object):
         self.mode = SS_CURVE_MODE
       elif parts[0] == 'sculpt':
         self.mode = SS_SCULPT_MODE
+      elif parts[0] == 'extrude':
+        self.mode = SS_EXTRUDE_MODE
+        self.extruding = False
       else:
         print('[ERROR] Invalid mode. ')
