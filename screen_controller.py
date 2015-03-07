@@ -32,6 +32,10 @@ class ScreenController(object):
     self.coordinate_parser = CoordinateParser(side, height)
     self.side = float(side)
     self.height = float(height)
+    self.phi = 0
+    self.theta = 0 
+    self.zoom = 1
+    self.point2 = (side/2,side/2,height/2)
 
   def run(self):
     glut.glutInit()
@@ -58,8 +62,8 @@ class ScreenController(object):
     glu.gluQuadricNormals(self.quadric, glu.GLU_SMOOTH)
     glu.gluQuadricTexture(self.quadric, gl.GL_TRUE)
 
-    lightP= self.tr(self.side/2, -self.side/2, self.side/2)
-    lightPosition = [lightP[0],lightP[1],lightP[2],0.5]
+    lightP= self.tr(self.side/2, self.side/2, self.side/2)
+    lightPosition = [lightP[0],lightP[1],lightP[2],0.0]
     lightColor = [WHITE[0], WHITE[1], WHITE[2], 1]
 
     """gl.glLightfv(gl.GL_LIGHT0, gl.GL_POSITION, lightPosition)
@@ -85,14 +89,16 @@ class ScreenController(object):
     gl.glEnable(gl.GL_LIGHT0)
 
     gl.glMatrixMode(gl.GL_PROJECTION)
-    glu.gluPerspective(30, 1, 1, 40)
+    glu.gluPerspective(30, 1, 0.0001, 40)
     gl.glMatrixMode(gl.GL_MODELVIEW)
+    p1 =  self.turn(self.theta,self.phi,self.zoom)
+    point3 = self.upvector(p1,self.point2)
     glu.gluLookAt(
-      self.side / 2, self.height / 2, 2,
-      self.side / 2, self.height / 2, 0,
+      p1[0],p1[2],-p1[1],#v1[0],v1[1],v1[2],#
+      self.point2[0],self.point2[2],-self.point2[1],#v2[0],v2[1],v2[2],#
       # 2, 0.5 * self.height, -math.sqrt(0.75 / 4) * self.side,
       # 0, 0.5 * self.height, -math.sqrt(0.75 / 4) * self.side,
-      0, 1, 0
+      point3[0],point3[2],-point3[1]#v3[0],v3[1],v3[2]
     )
     gl.glPushMatrix()
 
@@ -148,7 +154,7 @@ class ScreenController(object):
       sp=solid[i]
       ep=solid[i+1]
       print i,sp,ep
-      self.__draw_sphere(sp,radius=sizes[i])
+      self.__draw_sphere(sp,radius=(1)*sizes[i])
       self.__draw_cylinder(sp,ep,radius=sizes[i],radius2=sizes[i+1] )
 
   def __draw_polygon(self, op):
@@ -266,7 +272,7 @@ class ScreenController(object):
     for curve in self.command_parser.curves:
       self.__draw_line(curve)
 
-    gl.glColor4f(RED[0], RED[1], RED[2], 0.7)
+    gl.glColor4f(RED[0], RED[1], RED[2], 1)
     for solid in self.command_parser.solids:
       self.__draw_solid(solid[0],solid[1])
     # Draw status texts
@@ -311,8 +317,39 @@ class ScreenController(object):
 
   def __reshape(self, width, height):
     gl.glViewport(0, 0, width, height)
-
+  def turn(self,theta,phi,zoom):
+    return (self.side/2+zoom*9*self.side*math.sin(theta)/2,self.side/2-zoom*9*self.side*math.cos(theta)/2,
+      self.height/2+zoom*9*self.height*math.sin(phi)/2)
+  def upvector(self,p1,p2):
+    if p2[2] == p1[2]:
+        return (0,0,1)
+    else:
+        return (p1[0]-p2[0],p1[1]-p2[1],abs(((p1[0]-p2[0]) ** 2 + (p1[1]-p2[1]) ** 2)/(p2[2]-p1[2])))
   def __keyboard(self, key, x, y):
-    if key == '\033':
+    if key == chr(27):
       exit()
+    if key == chr(119): #up
+        self.phi =self.phi + 0.05
+    if key == chr(115): #down
+        self.phi = self.phi -0.05
+    if key == chr(97):  #left
+        self.theta = self.theta -0.05
+    if key == chr(100): #right
+        self.theta = self.theta +0.05
+    if key == chr(113): #zoom in(q)
+        self.zoom = self.zoom *0.95
+    if key == chr(101): #zoom out(e)
+        self.zoom = self.zoom *1.05    
+    gl.glMatrixMode(gl.GL_MODELVIEW)
+    gl.glLoadIdentity()
+    p1 =  self.turn(self.theta,self.phi,self.zoom)
+    point3 = self.upvector(p1,self.point2)
+    glu.gluLookAt(
+      p1[0],p1[2],-p1[1],#v1[0],v1[1],v1[2],#
+      self.point2[0],self.point2[2],-self.point2[1],#v2[0],v2[1],v2[2],#
+      # 2, 0.5 * self.height, -math.sqrt(0.75 / 4) * self.side,
+      # 0, 0.5 * self.height, -math.sqrt(0.75 / 4) * self.side,
+      point3[0],point3[2],-point3[1]#v3[0],v3[1],v3[2]
+    )
+    glut.glutPostRedisplay()
 #
