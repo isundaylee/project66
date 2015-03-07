@@ -1,5 +1,6 @@
 from coordinate_parser import CoordinateParser
 from serial_command_retriever import SerialCommandRetriever
+from wifi_command_retriever import WifiCommandRetriever
 
 import serial
 import math
@@ -11,7 +12,8 @@ SAMPLE_SIZE = 5
 NEARBY_THRESHOLD = 0.05
 
 PORT = '/dev/tty.usbmodem1413'
-
+WIFI_IP = '18.189.110.81'
+WIFI_PORT = 23
 
 class CommandParser(object):
 
@@ -28,7 +30,8 @@ class CommandParser(object):
     self.samples = []
     self.curve_tracing = False
     self.nearby_point = None
-    self.command_retriever = SerialCommandRetriever(PORT)
+    # self.command_retriever = SerialCommandRetriever(PORT)
+    self.command_retriever = WifiCommandRetriever(WIFI_IP, WIFI_PORT)
 
     self.das = []
     self.dbs = []
@@ -43,6 +46,9 @@ class CommandParser(object):
 
   def fetch_and_process(self):
     commands = self.command_retriever.fetch()
+
+    for c in commands:
+      print('[LOG] ' + c)
 
     for c in commands:
       self.process(c)
@@ -106,7 +112,7 @@ class CommandParser(object):
 
       if point == None:
         print('[ERROR] Invalid point. ')
-        print parts
+        print('        parts')
       else:
         self.last_point = self.__insert_and_fetch_sample(parts)
 

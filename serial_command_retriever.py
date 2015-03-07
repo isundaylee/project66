@@ -32,9 +32,6 @@ class SerialCommandRetriever(object):
         commands.append(self.data[0:loc])
         self.data = self.data[loc + 1:]
 
-    for c in commands:
-      print('[LOG] ' + c)
-
     return commands
 
   def send(self, msg):

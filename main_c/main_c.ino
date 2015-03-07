@@ -1,20 +1,25 @@
 /*
   Blink
-  Turns on an LED on for one second, then off for one second, repeatedly.
-
-  Most Arduinos have an on-board LED you can control. On the Uno and
-  Leonardo, it is attached to digital pin 13. If you're unsure what
-  pin the on-board LED is connected to on your Arduino model, check
-  the documentation at http://arduino.cc
-
-  This example code is in the public domain.
-
-  modified 8 May 2014
-  by Scott Fitzgerald
- */
+ Turns on an LED on for one second, then off for one second, repeatedly.
  
+ Most Arduinos have an on-board LED you can control. On the Uno and
+ Leonardo, it is attached to digital pin 13. If you're unsure what
+ pin the on-board LED is connected to on your Arduino model, check
+ the documentation at http://arduino.cc
+ 
+ This example code is in the public domain.
+ 
+ modified 8 May 2014
+ by Scott Fitzgerald
+ */
+
+#include <SPI.h>
+#include <WiFi.h>
+#include <signal.h>
+
 #define POLYGON 1
 #define CURVE 2
+#define SCULPT 3
 
 #define SWITCH_THRESHOLD 50
 #define SWITCH_HOLD_THRESHOLD 500
@@ -52,6 +57,9 @@ int mode = POLYGON;
 #define Cecho 1
 #define vibrate 9
 
+// WiFi
+
+WiFiServer server(23); 
 
 // the setup function runs once when you press reset or power the board
 void setup() {
@@ -68,187 +76,117 @@ void setup() {
   pinMode(Becho,INPUT);
   pinMode(Ctrig, OUTPUT);
   pinMode(Cecho,INPUT);
-//  pinMode(Cpin, INPUT); 
   pinMode(vibrate, OUTPUT);
+
+  signal(SIGPIPE, SIG_IGN);  
+
   attachInterrupt(clickpin, clicks, RISING);
   attachInterrupt(curvepin, int_curve, CHANGE);
+
+  server.begin(); 
+}
+
+void comm_println(char *msg) {
+  Serial.println(msg); 
+  server.println(msg); 
+}
+
+void comm_print(char *msg) {
+  Serial.print(msg);
+  server.print(msg); 
+}
+
+
+void comm_print(int v) {
+  Serial.print(v);
+  server.print(v); 
 }
 
 void int_curve() {
   static int last_high = INFINITY; 
-  
+
   if (digitalRead(curvepin) == HIGH) {
     last_high = millis(); 
-  } else {
+  } 
+  else {
     int duration = millis() - last_high; 
-    
+
     if (duration > SWITCH_THRESHOLD) {
       if (mode == POLYGON) {
         mode = CURVE;
-        Serial.println("mode curve");
-      } else {
-        mode = POLYGON;
-        Serial.println("mode polygon"); 
+        comm_println("mode curve");
+      } 
+      else if (mode == CURVE) {
+        mode = SCULPT;
+        comm_println("mode sculpt"); 
+      } 
+      else if (mode == SCULPT) {
+        mode = POLYGON; 
+        comm_println("mode polygon"); 
       }
     }
-    
+
     last_high = INFINITY;  
   }
 }
 
-void int_click() {
-  static int last_high = INFINITY; 
-  static int last_click = 0; 
-  
-  if (digitalRead(clickpin) == HIGH) {
-    last_high = millis(); 
-  } else {
-    int duration = millis() - last_high; 
-    
-    Serial.println(last_click); 
-    
-    if (duration > SWITCH_HOLD_THRESHOLD) {
-      Serial.println("hold"); 
-    } else if (duration > SWITCH_THRESHOLD) {
-      if (millis() - last_click < SWITCH_DOUBLECLICK_THRESHOLD) {
-        Serial.println("doubleclick"); 
-        last_click = 0; 
-      }
-      
-      last_click = millis(); 
-      
-      delay(300); 
-      
-      if (millis() - last_click > 200) {
-        Serial.println("click"); 
-      }
-    }
-    
-    last_high = INFINITY;  
-  }
-}
-
-void int_curve_high() {
-  curve_rep ++; 
-  Serial.println("high triggered"); 
-}
-
-void int_curve_falling() {
-  Serial.println("falling triggered"); 
-  if (curve_rep > SWITCH_THRESHOLD) {
-  }
-  
-  curve_rep = 0; 
-}
 
 // the code that will jump to if the user clicks
 void clicks() {
   clicking++;
   click_type++;
 }
-// the code that will jump to if the user press curve
-void curve() {
-  Serial.println("######################");
-  Serial.println("######################");
-  Serial.println("######################");
-  Serial.println("######################");
-  Serial.println("######################");
-  Serial.println("######################");
-  Serial.println("######################");
-  Serial.println("######################");
-  curving++;
-}
-// calibration mode
-void setA() {
-  calA = getDistance(Atrig,Aecho);
-}
-void setB() {
-  calB = getDistance(Btrig,Becho);
-}
-void setC() {
-  calC = getDistance(Ctrig,Cecho);
-}
-
 
 // get the distance from the ultrasonar
 int getDistance(int trigPin, int echoPin) {
-/* The following trigPin/echoPin cycle is used to determine the
- distance of the nearest object by bouncing soundwaves off of it. */
- digitalWrite(trigPin, LOW);
- delayMicroseconds(2);
- 
- digitalWrite(trigPin, HIGH);
- delayMicroseconds(10);
- 
- digitalWrite(trigPin, LOW);
- duration = pulseIn(echoPin, HIGH, 10000);
- 
- //Calculate the distance (in mm) based on the speed of sound.
- distance = duration/5.82;
-   return (int) distance;
- 
- if (distance >= maximumRange || distance <= minimumRange){
- /* Send a negative number to computer and Turn LED ON
- to indicate "out of range" */
-   return -1;
- }
- else {
- /* Send the distance to the computer using Serial protocol, and
- turn LED OFF to indicate successful reading. */
-   return (int) distance;
- }
-}
-//done with the getdistance 
+  // The following trigPin/echoPin cycle is used to determine the
+  // distance of the nearest object by bouncing soundwaves off of it. */
+  digitalWrite(trigPin, LOW);
+  delayMicroseconds(2);
 
+  digitalWrite(trigPin, HIGH);
+  delayMicroseconds(10);
 
-int getDistance2(int pin) {
-  return analogRead(pin); 
-}
+  digitalWrite(trigPin, LOW);
+  duration = pulseIn(echoPin, HIGH, 10000);
 
-// the code that tell the python code 
-void switchmode() {
-  if (clicking == 0) {
-    Serial.println("curve");
-  }
-  else {
-    if (click_type == 1) {
-      Serial.println("click");
-    }
-    else {
-      if (click_type == 10) {
-        Serial.println("hold");
-      }
-      else {
-        Serial.println("doubleclick");
-      }
-    }
-  }
+  //Calculate the distance (in mm) based on the speed of sound.
+  distance = duration/5.82;
+  return (int) distance;
 }
 
 //sendpoints print out the points that we get
 void sendpoints(){
-  Serial.print("point ");
-  Serial.print(getDistance(Atrig,Aecho)+calA);
-  Serial.print(" ");
-  Serial.print(getDistance(Btrig,Becho)+calB);
-  Serial.print(" ");
-  Serial.print(getDistance(Ctrig,Cecho)+calC); 
-//  Serial.print(getDistance2(Cpin));
-  Serial.println();
+  comm_print("point ");
+  comm_print(getDistance(Atrig,Aecho)+calA);
+  comm_print(" ");
+  comm_print(getDistance(Btrig,Becho)+calB);
+  comm_print(" ");
+  comm_print(getDistance(Ctrig,Cecho)+calC); 
+  comm_println("");
 }
 
 void check_for_clicks() {
   if (clicking != 0) {
     delay(300);
-    
+
     if (digitalRead(clickpin) != 0) {
       while (digitalRead(clickpin) == 1) {
         delay(100);
       }
       click_type = 10;
     }
-    
-    switchmode();
+
+    if (click_type == 1) {
+      comm_println("click");
+    } 
+    else if (click_type == 10) {
+      comm_println("hold");
+    } 
+    else {
+      comm_println("doubleclick");
+    }
+
     clicking = 0;
     click_type = 0;
   }
@@ -257,10 +195,11 @@ void check_for_clicks() {
 void check_for_nearby() {
   while (Serial.available() > 0) {
     byte incomingByte = Serial.read(); 
-    
+
     if (incomingByte == 'n') {
       digitalWrite(vibrate, HIGH); 
-    } else {
+    } 
+    else {
       digitalWrite(vibrate, LOW); 
     }
   }
@@ -268,13 +207,14 @@ void check_for_nearby() {
 
 // the loop function runs over and over again forever
 void loop() {
-  // the code that check the click type
+  server.available(); 
+
   check_for_clicks(); 
-  
+  // check_for_nearby(); 
+
   sendpoints();
-  
-//  check_for_nearby(); 
-  
+
   delay(100);
 }
+
 
