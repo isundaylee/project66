@@ -1,4 +1,5 @@
 from coordinate_parser import CoordinateParser
+from serial_command_retriever import SerialCommandRetriever
 
 import serial
 import math
@@ -11,13 +12,6 @@ NEARBY_THRESHOLD = 0.05
 
 PORT = '/dev/tty.usbmodem1413'
 
-INTERRUPT_COMMANDS = [
-  "click\n",
-  "doubleclick\n",
-  "hold\n",
-  "mode polygon\n",
-  "mode curve\n",
-]
 
 class CommandParser(object):
 
@@ -34,38 +28,24 @@ class CommandParser(object):
     self.samples = []
     self.curve_tracing = False
     self.nearby_point = None
+    self.command_retriever = SerialCommandRetriever(PORT)
 
     self.das = []
     self.dbs = []
     self.dcs = []
-
-    self.serial = serial.Serial(PORT, baudrate=9600, timeout=0.01)
-    self.data = ''
 
     self.coordinate_parser = CoordinateParser(side, height)
 
   def __parse_point(self, rp):
     rp = (float(rp[0]), float(rp[1]), float(rp[2]))
     p = (rp[0] / 1000.0, rp[1] / 1000.0, rp[2] / 1000.0)
-    print self.coordinate_parser.parse(float(p[0]), float(p[1]), float(p[2]))
     return self.coordinate_parser.parse(float(p[0]), float(p[1]), float(p[2]))
 
   def fetch_and_process(self):
-    if self.serial.inWaiting() > 0:
-      self.data = self.data + self.serial.read(16)
+    commands = self.command_retriever.fetch()
 
-      for c in INTERRUPT_COMMANDS:
-        if c in self.data:
-          print(c)
-          self.process(c)
-          self.data = self.data.replace(c, "")
-
-      loc = self.data.find("\n")
-
-      if loc != -1:
-        print self.data[0:loc]
-        self.process(self.data[0:loc])
-        self.data = self.data[loc + 1:]
+    for c in commands:
+      self.process(c)
 
   def __extract_sample(self, samples):
     if len(samples) == 1:
@@ -134,11 +114,10 @@ class CommandParser(object):
 
         if np:
           self.nearby_point = np
-          self.serial.write("n")
-          print('#' * 80)
+          self.command_retriever.send('n')
         else:
           self.nearby_point = None
-          self.serial.write('x')
+          self.command_retriever.send('x')
 
         if self.mode == SS_CURVE_MODE:
           self.current_points.append(point)
