@@ -26,6 +26,7 @@ class CommandParser(object):
     self.mode = SS_POLYGON_MODE
     self.last_point = (0, 0, 0)
     self.current_points = []
+    self.current_sizes = []
     self.polygons = []
     self.curves = []
     self.solids = []
@@ -35,7 +36,7 @@ class CommandParser(object):
     self.nearby_point = None
     # self.command_retriever = SerialCommandRetriever(PORT)
     self.command_retriever = WifiCommandRetriever(WIFI_IP, WIFI_PORT)
-    self.brush_radius=1
+    self.brush_radius=0.05
 
     self.das = []
     self.dbs = []
@@ -131,6 +132,7 @@ class CommandParser(object):
           self.current_points.append(point)
         elif self.mode ==SS_SCULPT_MODE:
           self.current_points.append(point)
+          self.current_sizes.append(self.brush_radius)
     elif type == 'doubleclick':
       if self.mode == SS_POLYGON_MODE:
         if self.nearby_point:
@@ -147,9 +149,10 @@ class CommandParser(object):
       elif self.mode==SS_SCULPT_MODE:
         if self.sculpting:
           if len(self.current_points) >= 2:
-            self.solids.append(self.current_points)
-            self.current_points=[]
+            self.solids.append((self.current_points,self.current_sizes))
         self.sculpting = (not self.sculpting )
+        self.current_points=[]
+        self.current_sizes=[]
     elif type == 'hold':
       if self.mode == SS_POLYGON_MODE:
         if len(self.current_points) >= 3:
@@ -157,6 +160,7 @@ class CommandParser(object):
         self.current_points = []
     elif type == 'mode':
       self.current_points = []
+      self.current_sizes = []
       self.curve_tracing = False
       self.sculpting = False
       if parts[0] == 'polygon':

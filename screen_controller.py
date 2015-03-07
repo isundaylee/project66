@@ -15,6 +15,7 @@ GREEN = (0, 0.8, 0)
 YELLOW = (1, 243.0 / 255, 71.0 / 255)
 BLUE = (10.0 / 255, 124.0 / 255, 1)
 RED = (1, 0, 0)
+WHITE = (1,1,1)
 
 WIDTH = 1280
 HEIGHT = 800
@@ -46,6 +47,7 @@ class ScreenController(object):
     gl.glShadeModel(gl.GL_SMOOTH)
     gl.glLineWidth(BASE_WIDTH * 1000)
     gl.glDisable(gl.GL_CULL_FACE)
+    gl.glDepthFunc(gl.GL_LESS)
     gl.glEnable(gl.GL_DEPTH_TEST)
     gl.glEnable(gl.GL_LINE_SMOOTH)
     gl.glEnable(gl.GL_BLEND)
@@ -56,14 +58,29 @@ class ScreenController(object):
     glu.gluQuadricNormals(self.quadric, glu.GLU_SMOOTH)
     glu.gluQuadricTexture(self.quadric, gl.GL_TRUE)
 
-    lightPosition = [self.side / 2, self.height / 2, self.side / 3, 0.5]
-    lightColor = [BLUE[0], BLUE[1], BLUE[2], 1]
+    lightP= self.tr(self.side/2, -self.side/2, self.side/2)
+    lightPosition = [lightP[0],lightP[1],lightP[2],0.5]
+    lightColor = [WHITE[0], WHITE[1], WHITE[2], 1]
 
-    gl.glLightfv(gl.GL_LIGHT0, gl.GL_POSITION, lightPosition)
+    """gl.glLightfv(gl.GL_LIGHT0, gl.GL_POSITION, lightPosition)
     gl.glLightfv(gl.GL_LIGHT0, gl.GL_DIFFUSE, lightColor)
     gl.glLightf(gl.GL_LIGHT0, gl.GL_CONSTANT_ATTENUATION, 0.01)
-    gl.glLightf(gl.GL_LIGHT0, gl.GL_LINEAR_ATTENUATION, 0.05)
+    gl.glLightf(gl.GL_LIGHT0, gl.GL_LINEAR_ATTENUATION, 0.05)"""
+
+    gl.glLightfv(gl.GL_LIGHT0, gl.GL_AMBIENT, gl.GLfloat_4(0.0, 1.0, 0.0, 1.0))
+    gl.glLightfv(gl.GL_LIGHT0, gl.GL_DIFFUSE, lightColor)
+    gl.glLightfv(gl.GL_LIGHT0, gl.GL_SPECULAR, gl.GLfloat_4(1.0, 1.0, 1.0, 1.0))
+    gl.glLightfv(gl.GL_LIGHT0, gl.GL_POSITION, lightPosition)
+    gl.glLightModelfv(gl.GL_LIGHT_MODEL_AMBIENT, gl.GLfloat_4(0.2, 0.2, 0.2, 1.0))
+    gl.glEnable(gl.GL_LIGHTING)
+    gl.glEnable(gl.GL_LIGHT0)
     gl.glColorMaterial(gl.GL_FRONT, gl.GL_DIFFUSE)
+
+
+    gl.glMaterialfv(gl.GL_FRONT, gl.GL_AMBIENT, gl.GLfloat_4(0.2, 0.2, 0.2, 1.0))
+    gl.glMaterialfv(gl.GL_FRONT, gl.GL_DIFFUSE, gl.GLfloat_4(0.8, 0.8, 0.8, 1.0))
+    gl.glMaterialfv(gl.GL_FRONT, gl.GL_SPECULAR, gl.GLfloat_4(1.0, 0.0, 1.0, 1.0))
+    gl.glMaterialfv(gl.GL_FRONT, gl.GL_SHININESS, gl.GLfloat(50.0))
     gl.glEnable(gl.GL_COLOR_MATERIAL)
     gl.glEnable(gl.GL_LIGHT0)
 
@@ -126,11 +143,13 @@ class ScreenController(object):
 
     gl.glPopMatrix()
 
-  def __draw_solid(self, solid):
+  def __draw_solid(self, solid, sizes):
     for i in range(len(solid)-1):
       sp=solid[i]
       ep=solid[i+1]
-      self.__draw_cylinder(sp,ep,radius=self.brush_radius,radius2=self.brush_radius)
+      print i,sp,ep
+      self.__draw_sphere(sp,radius=sizes[i])
+      self.__draw_cylinder(sp,ep,radius=sizes[i],radius2=sizes[i+1] )
 
   def __draw_polygon(self, points):
     points.append(points[0])
@@ -216,11 +235,20 @@ class ScreenController(object):
     if self.command_parser.mode == SS_POLYGON_MODE:
       gl.glColor3f(RED[0], RED[1], RED[2])
       self.__draw_sphere(self.command_parser.last_point, radius=0.03)
+    elif self.command_parser.mode == SS_SCULPT_MODE:
+      gl.glColor3f(GREEN[0], GREEN[1], GREEN[2])
+      self.__draw_sphere(self.command_parser.last_point, radius=0.03)
 
     # Plot the pending selected points
 
-    gl.glColor4f(YELLOW[0], YELLOW[1], YELLOW[2], 0.7)
-    self.__draw_line(self.command_parser.current_points)
+    if self.command_parser.mode != SS_SCULPT_MODE:
+      gl.glColor4f(YELLOW[0], YELLOW[1], YELLOW[2], 0.7)
+      self.__draw_line(self.command_parser.current_points)
+    else:
+      if self.command_parser.sculpting:
+        gl.glColor4f(YELLOW[0], YELLOW[1], YELLOW[2], 0.7)
+        self.__draw_solid(self.command_parser.current_points,self.command_parser.current_sizes)
+
 
     if len(self.command_parser.current_points) > 0:
       self.__draw_sphere(self.command_parser.current_points[-1])
@@ -237,13 +265,16 @@ class ScreenController(object):
     for curve in self.command_parser.curves:
       self.__draw_line(curve)
 
+    gl.glColor4f(RED[0], RED[1], RED[2], 0.7)
     for solid in self.command_parser.solids:
-      self.__draw_solid(solid)
+      self.__draw_solid(solid[0],solid[1])
     # Draw status texts
     if self.command_parser.mode == SS_POLYGON_MODE:
       self.__draw_text(20, HEIGHT - 25, "POLYGON MODE")
-    else:
+    elif self.command_parser.mode==SS_CURVE_MODE:
       self.__draw_text(20, HEIGHT - 25, "CURVE MODE")
+    elif self.command_parser.mode==SS_SCULPT_MODE:
+      self.__draw_text(20, HEIGHT - 25, "SCULPT MODE")
 
     if self.command_parser.nearby_point:
       self.__draw_text(20, HEIGHT - 50, "NEARBY POINT DETECTED")
