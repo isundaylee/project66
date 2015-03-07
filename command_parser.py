@@ -7,6 +7,7 @@ import math
 
 SS_POLYGON_MODE = 0
 SS_CURVE_MODE = 1
+SS_SCULPT_MODE = 2
 
 SAMPLE_SIZE = 5
 NEARBY_THRESHOLD = 0.05
@@ -27,11 +28,14 @@ class CommandParser(object):
     self.current_points = []
     self.polygons = []
     self.curves = []
+    self.solids = []
     self.samples = []
     self.curve_tracing = False
+    self.sculpting = False
     self.nearby_point = None
     # self.command_retriever = SerialCommandRetriever(PORT)
     self.command_retriever = WifiCommandRetriever(WIFI_IP, WIFI_PORT)
+    self.brush_radius=1
 
     self.das = []
     self.dbs = []
@@ -115,9 +119,7 @@ class CommandParser(object):
         print('        parts')
       else:
         self.last_point = self.__insert_and_fetch_sample(parts)
-
         np = self.__fetch_nearby_point(self.last_point)
-
         if np:
           self.nearby_point = np
           self.command_retriever.send('n')
@@ -127,6 +129,8 @@ class CommandParser(object):
 
         if self.mode == SS_CURVE_MODE:
           self.current_points.append(point)
+        elif self.mode ==SS_SCULPT_MODE:
+          self.current_points.append(point)
     elif type == 'doubleclick':
       if self.mode == SS_POLYGON_MODE:
         if self.nearby_point:
@@ -135,11 +139,17 @@ class CommandParser(object):
     elif type == 'click':
       if self.mode == SS_POLYGON_MODE:
         self.current_points.append(self.last_point)
-      else:
+      elif self.mode==SS_CURVE_MODE:
         if self.curve_tracing:
           if len(self.current_points) >= 2:
             self.curves.append(self.current_points)
         self.curve_tracing = (not self.curve_tracing)
+      elif self.mode==SS_SCULPT_MODE:
+        if self.sculpting:
+          if len(self.current_points) >= 2:
+            self.solids.append(self.current_points)
+            self.current_points=[]
+        self.sculpting = (not self.sculpting )
     elif type == 'hold':
       if self.mode == SS_POLYGON_MODE:
         if len(self.current_points) >= 3:
@@ -148,9 +158,12 @@ class CommandParser(object):
     elif type == 'mode':
       self.current_points = []
       self.curve_tracing = False
+      self.sculpting = False
       if parts[0] == 'polygon':
         self.mode = SS_POLYGON_MODE
       elif parts[0] == 'curve':
         self.mode = SS_CURVE_MODE
+      elif parts[0] == 'sculpt':
+        self.mode = SS_SCULPT_MODE
       else:
         print('[ERROR] Invalid mode. ')

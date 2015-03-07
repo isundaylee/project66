@@ -89,7 +89,7 @@ class ScreenController(object):
   def fr(self, x, y, z):
     return (x, z, -y)
 
-  def __draw_cylinder(self, p1, p2, radius=BASE_WIDTH*0.02):
+  def __draw_cylinder(self, p1, p2, radius=BASE_WIDTH*0.02, radius2=BASE_WIDTH*0.02):
     p1, p2 = self.tr(p1[0], p1[1], p1[2]), self.tr(p2[0], p2[1], p2[2])
 
     dx = float(p2[0] - p1[0])
@@ -111,7 +111,7 @@ class ScreenController(object):
     gl.glRotatef(math.degrees(x_angle), 1, 0, 0)
     gl.glRotatef(math.degrees(y_angle), 0, 1, 0)
 
-    glu.gluCylinder(self.quadric, radius, radius, length, 32, 32)
+    glu.gluCylinder(self.quadric, radius, radius2, length, 32, 32)
 
     gl.glPopMatrix()
 
@@ -125,6 +125,12 @@ class ScreenController(object):
     glu.gluSphere(self.quadric, radius, 32, 32)
 
     gl.glPopMatrix()
+
+  def __draw_solid(self, solid):
+    for i in range(len(solid)-1):
+      sp=solid[i]
+      ep=solid[i+1]
+      self.__draw_cylinder(sp,ep,radius=self.brush_radius,radius2=self.brush_radius)
 
   def __draw_polygon(self, points):
     points.append(points[0])
@@ -231,6 +237,8 @@ class ScreenController(object):
     for curve in self.command_parser.curves:
       self.__draw_line(curve)
 
+    for solid in self.command_parser.solids:
+      self.__draw_solid(solid)
     # Draw status texts
     if self.command_parser.mode == SS_POLYGON_MODE:
       self.__draw_text(20, HEIGHT - 25, "POLYGON MODE")
