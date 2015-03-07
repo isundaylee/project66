@@ -1,7 +1,7 @@
 from coordinate_parser import CoordinateParser
 from serial_command_retriever import SerialCommandRetriever
 from wifi_command_retriever import WifiCommandRetriever
-from geometry import dot, cross, norm, multi, minus
+from geometry import dot, cross, norm, multi, minus, plus
 
 import serial
 import math
@@ -64,6 +64,7 @@ class CommandParser(object):
     return self.coordinate_parser.parse(float(p[0]), float(p[1]), float(p[2]))
 
   def fetch_and_process(self):
+    print(len(self.polygons))
     commands = self.command_retriever.fetch()
     hcommands = self.handle.fetch()
 
@@ -188,6 +189,18 @@ class CommandParser(object):
       self.lastClick=clicked
     if state==0:
       self.brush_radius=0.01+0.05*(angle/50.0)
+      
+  def calculate_extrusion_extra_polygons(self, e):
+    polys = []
+    poly, vec = e
+    new_poly = list(map(lambda v: plus(v, vec), poly))
+
+    polys.append(new_poly)
+
+    for i in range(len(poly)):
+      polys.append([poly[i - 1], poly[i], new_poly[i], new_poly[i - 1]])
+
+    return polys
 
   def process(self, command):
     parts = command.split()
@@ -249,6 +262,11 @@ class CommandParser(object):
       elif self.mode == SS_EXTRUDE_MODE:
         if self.extruding:
           self.extrusions.append((self.extruding_polygon, minus(self.last_point, self.extruding_origin)))
+
+          eps = self.calculate_extrusion_extra_polygons(self.extrusions[-1])
+          for p in eps:
+            self.polygons.append(p)
+
           self.extruding = False
         else:
           if self.extruding_candidate:

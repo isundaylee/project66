@@ -114,17 +114,17 @@ void int_curve() {
 
     if (duration > SWITCH_THRESHOLD) {
       if (mode == POLYGON) {
-        mode = CURVE;
-        comm_println("mode curve");
+        mode = EXTRUDE;
+        comm_println("mode extrude");
       } 
-      else if (mode == CURVE) {
+      else if (mode == EXTRUDE) {
         mode = SCULPT;
         comm_println("mode sculpt"); 
       } 
       else if (mode == SCULPT) {
-        mode = EXTRUDE; 
-        comm_println("mode extrude"); 
-      } else if (mode == EXTRUDE) {
+        mode = CURVE; 
+        comm_println("mode curve"); 
+      } else if (mode == CURVE) {
         mode = POLYGON; 
         comm_println("mode polygon"); 
       }
@@ -172,6 +172,7 @@ void sendpoints(){
 
 void check_for_clicks() {
   if (clicking != 0) {
+    comm_println("debug click delaying"); 
     delay(300);
 
     if (digitalRead(clickpin) != 0) {

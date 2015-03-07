@@ -49,12 +49,12 @@ class ScreenController(object):
     glut.glutKeyboardFunc(self.__keyboard)
 
     gl.glClearColor(0, 0, 0, 1)
-    gl.glShadeModel(gl.GL_SMOOTH)
+    # gl.glShadeModel(gl.GL_SMOOTH)
     gl.glLineWidth(BASE_WIDTH * 1000)
     gl.glDisable(gl.GL_CULL_FACE)
     gl.glDepthFunc(gl.GL_LESS)
     gl.glEnable(gl.GL_DEPTH_TEST)
-    gl.glEnable(gl.GL_LINE_SMOOTH)
+    # gl.glEnable(gl.GL_LINE_SMOOTH)
     gl.glEnable(gl.GL_BLEND)
     gl.glBlendFunc(gl.GL_SRC_ALPHA, gl.GL_ONE_MINUS_SRC_ALPHA)
     # gl.glEnable(gl.GL_LIGHTING)
@@ -161,6 +161,8 @@ class ScreenController(object):
       self.__draw_cylinder(sp,ep,radius=sizes[i],radius2=sizes[i+1] )
 
   def __draw_polygon(self, op):
+    r, g, b, a = gl.glGetFloatv(gl.GL_CURRENT_COLOR)
+
     points = op[:]
     points.append(points[0])
 
@@ -171,6 +173,16 @@ class ScreenController(object):
       gl.glVertex3f(p[0], p[1], p[2])
 
     gl.glEnd()
+
+    gl.glColor4f(0.5 * r, 0.5 * g, 0.5 * b, a)
+
+    gl.glBegin(gl.GL_LINE_LOOP)
+    for rp in points:
+      p = self.tr(rp[0], rp[1], rp[2])
+      gl.glVertex3f(p[0], p[1], p[2])
+    gl.glEnd()
+
+    gl.glColor4f(r, g, b, a)
 
   def __draw_line(self, points):
     gl.glBegin(gl.GL_LINE_STRIP)
@@ -196,20 +208,10 @@ class ScreenController(object):
           gl.glDisable(gl.GL_BLEND)
 
   def __draw_extrusion(self, extrusion):
-    poly, vec = extrusion
-    new_poly = list(map(lambda v: plus(v, vec), poly))
+    polys = self.command_parser.calculate_extrusion_extra_polygons(extrusion)
 
-    self.__draw_polygon(poly)
-    self.__draw_polygon(new_poly)
-
-    gl.glBegin(gl.GL_TRIANGLE_STRIP)
-    for i in range(len(poly)):
-      p = self.tr(poly[i][0], poly[i][1], poly[i][2])
-      np = self.tr(new_poly[i][0], new_poly[i][1], new_poly[i][2])
-
-      gl.glVertex3f(p[0], p[1], p[2])
-      gl.glVertex3f(np[0], np[1], np[2])
-    gl.glEnd()
+    for p in polys:
+      self.__draw_polygon(p)
 
   def __display(self):
     gl.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT)
@@ -294,6 +296,7 @@ class ScreenController(object):
     gl.glColor4f(RED[0], RED[1], RED[2], 1)
     for solid in self.command_parser.solids:
       self.__draw_solid(solid[0],solid[1])
+
     # Draw status texts
     if self.command_parser.mode == SS_POLYGON_MODE:
       self.__draw_text(20, HEIGHT - 25, "POLYGON MODE")
@@ -311,13 +314,17 @@ class ScreenController(object):
       self.__draw_text(20, HEIGHT - 50, "EXTRUDING CANDIDATE DETECTED")
 
     # Draw the extrusion preview
+    gl.glColor4f(YELLOW[0], YELLOW[1], YELLOW[2], 0.7)
+
     if self.command_parser.mode == SS_EXTRUDE_MODE and self.command_parser.extruding:
       preview = (self.command_parser.extruding_polygon, minus(self.command_parser.last_point, self.command_parser.extruding_origin))
       self.__draw_extrusion(preview)
 
-    # Draw the actual extrusions
-    for e in self.command_parser.extrusions:
-      self.__draw_extrusion(e)
+    # # Draw the actual extrusions
+    # gl.glColor4f(BLUE[0], BLUE[1], BLUE[2], 0.7)
+
+    # for e in self.command_parser.extrusions:
+    #   self.__draw_extrusion(e)
 
     if self.command_parser.last_point:
       self.__draw_text(WIDTH - 140, HEIGHT - 25, str(self.command_parser.last_point[0]))
