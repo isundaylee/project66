@@ -115,6 +115,8 @@ class ScreenController(object):
 
     r = math.sqrt(dy ** 2 + dz ** 2)
     length = math.sqrt(dx ** 2 + dy ** 2 + dz ** 2)
+    if length==0:
+      return
 
     if r == 0:
       x_angle = 0
@@ -237,7 +239,7 @@ class ScreenController(object):
       self.__draw_sphere(self.command_parser.last_point, radius=0.03)
     elif self.command_parser.mode == SS_SCULPT_MODE:
       gl.glColor3f(GREEN[0], GREEN[1], GREEN[2])
-      self.__draw_sphere(self.command_parser.last_point, radius=0.03)
+      self.__draw_sphere(self.command_parser.last_point, radius=self.command_parser.brush_radius)
 
     # Plot the pending selected points
 
