@@ -38,6 +38,7 @@ class CommandParser(object):
     self.polygons = []
     self.color=0
     self.curves = []
+    self.handle_state=0
     self.lastClick = 0
     self.solids = []
     self.extrusions = []
@@ -189,6 +190,7 @@ class CommandParser(object):
   def hprocess(self, command):
     parts = command.split()
     state=int(parts[0])
+    self.handle_state = state
     angle=int(parts[1])
     clicked=int(parts[2])
     nclick=int(parts[3])
@@ -233,7 +235,7 @@ class CommandParser(object):
           if len(self.current_points) >= 3:
             self.polygons.append(self.current_points[:])
           self.current_points = []
-          
+
     if state==2:
       self.brush_radius=0.01+0.05*(angle/50.0)
     elif state==1:

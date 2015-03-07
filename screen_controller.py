@@ -61,7 +61,6 @@ class ScreenController(object):
     gl.glDepthFunc(gl.GL_LEQUAL);
     gl.glDepthRange(0.0, 1.0);
 
-
     gl.glEnable(gl.GL_BLEND)
     gl.glBlendFunc(gl.GL_SRC_ALPHA, gl.GL_ONE_MINUS_SRC_ALPHA)
     # gl.glEnable(gl.GL_LIGHTING)
@@ -329,11 +328,18 @@ class ScreenController(object):
     elif self.command_parser.mode == SS_EXTRUDE_MODE:
       self.__draw_text(20, HEIGHT - 25, "EXTRUDE MODE")
 
+    if self.command_parser.handle_state == 0:
+      self.__draw_text(20, HEIGHT - 50, "MODE SELECT")
+    elif self.command_parser.handle_state == 1:
+      self.__draw_text(20, HEIGHT - 50, "COLOR SELECT")
+    elif self.command_parser.handle_state == 2:
+      self.__draw_text(20, HEIGHT - 50, "SIZE SELECT")
+
     if self.command_parser.mode == SS_POLYGON_MODE and self.command_parser.nearby_point:
-      self.__draw_text(20, HEIGHT - 50, "NEARBY POINT DETECTED")
+      self.__draw_text(20, HEIGHT - 75, "NEARBY POINT DETECTED")
 
     if self.command_parser.mode == SS_EXTRUDE_MODE and self.command_parser.extruding_candidate:
-      self.__draw_text(20, HEIGHT - 50, "EXTRUDING CANDIDATE DETECTED")
+      self.__draw_text(20, HEIGHT - 75, "EXTRUDING CANDIDATE DETECTED")
 
     # Draw the extrusion preview
     gl.glColor4f(YELLOW[0], YELLOW[1], YELLOW[2], 0.7)
@@ -361,6 +367,8 @@ class ScreenController(object):
     elif self.command_parser.mode == SS_SCULPT_MODE:
       gl.glColor3f(GREEN[0], GREEN[1], GREEN[2])
       self.__draw_sphere(self.command_parser.last_point, radius=0.03)
+
+
 
     glut.glutSwapBuffers()
 
