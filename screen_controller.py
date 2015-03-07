@@ -42,7 +42,7 @@ class ScreenController(object):
 
   def run(self):
     glut.glutInit()
-    glut.glutInitDisplayMode(glut.GLUT_DOUBLE | glut.GLUT_RGBA)
+    glut.glutInitDisplayMode(glut.GLUT_DEPTH|glut.GLUT_DOUBLE | glut.GLUT_RGBA)
     glut.glutCreateWindow('Hello, triangles! ')
     glut.glutReshapeWindow(WIDTH, HEIGHT)
     glut.glutReshapeFunc(self.__reshape)
@@ -55,9 +55,13 @@ class ScreenController(object):
     # gl.glShadeModel(gl.GL_SMOOTH)
     gl.glLineWidth(BASE_WIDTH * 1000)
     gl.glDisable(gl.GL_CULL_FACE)
-    gl.glDepthFunc(gl.GL_LESS)
-    gl.glEnable(gl.GL_DEPTH_TEST)
-    # gl.glEnable(gl.GL_LINE_SMOOTH)
+
+    gl.glEnable(gl.GL_DEPTH_TEST);
+    gl.glDepthMask(gl.GL_TRUE);
+    gl.glDepthFunc(gl.GL_LEQUAL);
+    gl.glDepthRange(0.0, 1.0);
+
+
     gl.glEnable(gl.GL_BLEND)
     gl.glBlendFunc(gl.GL_SRC_ALPHA, gl.GL_ONE_MINUS_SRC_ALPHA)
     # gl.glEnable(gl.GL_LIGHTING)
@@ -227,7 +231,9 @@ class ScreenController(object):
       self.__draw_polygon(p)
 
   def __display(self):
-    gl.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT)
+    gl.glClearColor(0.0, 0.0, 0.0, 0.0);
+    gl.glClearDepth(1.0);
+    gl.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT);
 
     # Drawing the axes
     gl.glBegin(gl.GL_LINES)
