@@ -355,6 +355,25 @@ class ScreenController(object):
         return (0,0,1)
     else:
         return (p1[0]-p2[0],p1[1]-p2[1],abs(((p1[0]-p2[0]) ** 2 + (p1[1]-p2[1]) ** 2)/(p2[2]-p1[2])))
+  def outputfile(self):
+    f = open('myPaint.obj', 'w')
+    vertices = []
+    faces = []
+    for poly in self.command_parser.polygons:
+      first = len(vertices)
+      current = len(vertices)
+      for i in poly:
+        vertices = vertices+['v '+ str(i[0]) + ' ' + str(i[1]) + ' ' + str(i[2]) +'\n']
+        if first+1 < current:
+          faces = faces + ['f '+ str(first+1) + ' ' + str(current) + ' ' + str(current+1) + '\n']
+        current += 1
+    for i in vertices:
+      f.write(i)
+    f.write('g objsurface' + '\n')
+    for i in faces:
+      f.write(i)
+    f.write('g')
+
   def __keyboard(self, key, x, y):
     if key == chr(27):
       exit()
@@ -369,7 +388,9 @@ class ScreenController(object):
     if key == chr(113): #zoom in(q)
         self.zoom = self.zoom *0.95
     if key == chr(101): #zoom out(e)
-        self.zoom = self.zoom *1.05
+        self.zoom = self.zoom *1.05 
+    if key == chr(111): #output as .obj
+        self.outputfile()   
     gl.glMatrixMode(gl.GL_MODELVIEW)
     gl.glLoadIdentity()
     p1 =  self.turn(self.theta,self.phi,self.zoom)
