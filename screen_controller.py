@@ -17,6 +17,7 @@ COLZ=((0, 0.8, 0), (1, 243.0 / 255, 71.0 / 255), (10.0 / 255, 124.0 / 255, 1), (
 GREEN = (0, 0.8, 0)
 YELLOW = (1, 243.0 / 255, 71.0 / 255)
 BLUE = (10.0 / 255, 124.0 / 255, 1)
+DARK_BLUE = (0.0, 64.0 / 255.0, 1.0)
 RED = (1, 0, 0)
 WHITE = (1,1,1)
 
@@ -347,6 +348,10 @@ class ScreenController(object):
     if self.command_parser.mode == SS_EXTRUDE_MODE and self.command_parser.extruding:
       preview = (self.command_parser.extruding_polygon, minus(self.command_parser.last_point, self.command_parser.extruding_origin))
       self.__draw_extrusion(preview)
+
+    if self.command_parser.mode == SS_EXTRUDE_MODE and (not self.command_parser.extruding) and (self.command_parser.extruding_candidate):
+      gl.glColor4f(DARK_BLUE[0], DARK_BLUE[1], DARK_BLUE[2], 0.7)
+      self.__draw_polygon(self.command_parser.extruding_candidate)
 
     # # Draw the actual extrusions
     # gl.glColor4f(BLUE[0], BLUE[1], BLUE[2], 0.7)
