@@ -18,7 +18,7 @@ EC_CANDIDATE_THRESHOLD = 0.05
 
 PORT = '/dev/tty.usbmodem1413'
 HPORT = '/dev/cu.usbserial-A602KCO2'
-WIFI_IP = '18.189.110.81'
+WIFI_IP = '18.111.107.24'
 WIFI_PORT = 23
 
 EPSILON = 1e-9
