@@ -39,7 +39,7 @@ class ScreenController(object):
     self.height = float(height)
     self.phi = 0
     self.theta = 0
-    self.zoom = 1
+    self.zoom = 5
     self.point2 = (width/2,depth/2,height/2)
     self.AAA = (0,0,0)
     self.AAB = (0,0,height)
@@ -258,21 +258,28 @@ class ScreenController(object):
 
     gl.glEnd()
 
+    gl.glColor3f(RED[0], RED[1], RED[2])
+    self.__draw_cylinder((-.1,-.1,-.1),(0,-.1,-.1))
+    gl.glColor3f(GREEN[0], GREEN[1], GREEN[2])
+    self.__draw_cylinder((-.1,-.1,-.1),(-.1,0,-.1))
+    gl.glColor3f(BLUE[0], BLUE[1], BLUE[2])
+    self.__draw_cylinder((-.1,-.1,-.1),(-.1,-.1,0))
+
     # Drawing the framework
 
     gl.glColor4f(GREEN[0], GREEN[1], GREEN[2], 0.8)
 
-    # Bottom triangle
+    # Bottom rectangle
     self.__draw_cylinder(self.AAA,self.ABA)
     self.__draw_cylinder(self.ABA,self.BBA)
-    self.__draw_cylinder(self.BBA,self.ABA)
-    self.__draw_cylinder(self.ABA,self.AAA)
+    self.__draw_cylinder(self.BBA,self.BAA)
+    self.__draw_cylinder(self.BAA,self.AAA)
 
-    # Top triangle
+    # Top rectangle
     self.__draw_cylinder(self.AAB,self.ABB)
     self.__draw_cylinder(self.ABB,self.BBB)
-    self.__draw_cylinder(self.BBB,self.ABB)
-    self.__draw_cylinder(self.ABB,self.AAB)
+    self.__draw_cylinder(self.BBB,self.BAB)
+    self.__draw_cylinder(self.BAB,self.AAB)
 
     # Sides
     self.__draw_cylinder(self.AAA,self.AAB)
@@ -414,8 +421,10 @@ class ScreenController(object):
   def __reshape(self, width, height):
     gl.glViewport(0, 0, width, height)
   def turn(self,theta,phi,zoom):
-    return (self.width/2+zoom*9*self.width*math.sin(theta)/2,self.depth/2-zoom*9*self.depth*math.cos(theta)/2,
-      self.height/2+zoom*9*self.height*math.sin(phi)/2)
+    return (
+      self.width/2+zoom*self.height*math.sin(theta)/2,
+      self.depth/2-zoom*self.height*math.cos(theta)/2,
+      self.height/2+zoom*self.height*math.sin(phi)/2)
   def upvector(self,p1,p2):
     if p2[2] == p1[2]:
         return (0,0,1)
