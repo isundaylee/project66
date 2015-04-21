@@ -12,13 +12,15 @@ SS_CURVE_MODE = 1
 SS_SCULPT_MODE = 2
 SS_EXTRUDE_MODE = 3
 
+SENSOR_TARE = 24
+
 SAMPLE_SIZE = 5
 NEARBY_THRESHOLD = 0.05
 EC_CANDIDATE_THRESHOLD = 0.05
 
 PORT = '/dev/tty.usbmodem1413'
 HPORT = '/dev/cu.usbserial-A602KCO2'
-WIFI_IP = '18.111.107.24'
+WIFI_IP = '18.111.41.30'
 WIFI_PORT = 23
 
 EPSILON = 1e-9
@@ -66,9 +68,9 @@ class CommandParser(object):
     self.coordinate_parser = CoordinateParser(height)
 
   def __parse_point(self, rp):
-    rp = (float(rp[0]), float(rp[1]), float(rp[2]))
+    rp = (float(rp[0]) - SENSOR_TARE + self.sensors[0][1], float(rp[1]) - SENSOR_TARE + self.sensors[1][1], float(rp[2]) - SENSOR_TARE + self.sensors[2][1])
     p = (rp[0] / 1000.0, rp[1] / 1000.0, rp[2] / 1000.0)
-    return self.coordinate_parser.parse(self.sensors[0],self.sensors[1],self.sensors[2],float(p[0]), float(p[1]), float(p[2]))
+    return self.coordinate_parser.parse(self.sensors[0][0],self.sensors[1][0],self.sensors[2][0], float(p[0]), float(p[1]), float(p[2]))
 
   def fetch_and_process(self):
     commands = self.command_retriever.fetch()

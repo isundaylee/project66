@@ -16,7 +16,7 @@ class CoordinateParser(object):
 
     y = (db ** 2 * pa[0] - dc ** 2 * pa[0] - da ** 2 * pb[0] + dc ** 2 * pb[0] + pa[0] ** 2 * pb[0] + pa[1] ** 2 * pb[0] - pa[0] * pb[0] ** 2 - pa[0] * pb[1] ** 2 + da ** 2 * pc[0] - db ** 2 * pc[0] - pa[0] ** 2 * pc[0] - pa[1] ** 2 * pc[0] + pb[0] ** 2 * pc[0] + pb[1] ** 2 * pc[0] + pa[0] * pc[0] ** 2 - pb[0] * pc[0] ** 2 + pa[0] * pc[1] ** 2 - pb[0] * pc[1] ** 2)/(2 * (pa[1] * pb[0] - pa[0] * pb[1] - pa[1] * pc[0] + pb[1] * pc[0] + pa[0] * pc[1] - pb[0] * pc[1]))
 
-    delta = dc - pc[0] ** 2 - pc[1] ** 2 + 2 * pc[0] * x - x ** 2 + 2 * pc[1] * y - y ** 2
+    delta = dc ** 2 - pc[0] ** 2 - pc[1] ** 2 + 2 * pc[0] * x - x ** 2 + 2 * pc[1] * y - y ** 2
 
     if delta < 0:
       return None

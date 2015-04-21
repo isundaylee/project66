@@ -37,9 +37,6 @@ long duration, distance; // Duration used to calculate distance
 int click_type = 0;
 int clicking = 0;
 int curving = 0;
-int calA = 122;
-int calB = 123;
-int calC = 130;
 
 int curve_rep = 0;
 
@@ -156,11 +153,11 @@ int getDistance(int trigPin, int echoPin) {
 //sendpoints print out the points that we get
 void sendpoints(){
   comm_print("point ");
-  comm_print(getDistance(Atrig,Aecho)+calA);
+  comm_print(getDistance(Atrig,Aecho));
   comm_print(" ");
-  comm_print(getDistance(Btrig,Becho)+calB);
+  comm_print(getDistance(Btrig,Becho));
   comm_print(" ");
-  comm_print(getDistance(Ctrig,Cecho)+calC); 
+  comm_print(getDistance(Ctrig,Cecho)); 
   comm_println("");
 }
 

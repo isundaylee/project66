@@ -30,16 +30,25 @@ class ScreenController(object):
 
   sample_commands_parsed = False
 
-  def __init__(self, sensors, side, height):
+  def __init__(self, sensors, width, depth, height):
     super(ScreenController, self).__init__()
     self.command_parser = CommandParser(sensors, height)
     self.coordinate_parser = CoordinateParser(height)
-    self.side = float(side)
+    self.width = float(width)
+    self.depth = float(depth)
     self.height = float(height)
     self.phi = 0
     self.theta = 0
     self.zoom = 1
-    self.point2 = (side/2,side/2,height/2)
+    self.point2 = (width/2,depth/2,height/2)
+    self.AAA = (0,0,0)
+    self.AAB = (0,0,height)
+    self.ABA = (0,depth,0)
+    self.ABB = (0,depth,height)
+    self.BAA = (width,0,0)
+    self.BAB = (width,0,height)
+    self.BBA = (width,depth,0)
+    self.BBB = (width,depth,height)
 
   def run(self):
     glut.glutInit()
@@ -70,7 +79,7 @@ class ScreenController(object):
     glu.gluQuadricNormals(self.quadric, glu.GLU_SMOOTH)
     glu.gluQuadricTexture(self.quadric, gl.GL_TRUE)
 
-    lightP= self.tr(self.side/2, self.side/2, self.side/2)
+    lightP= self.tr(self.width/2, self.width/2, self.width/2)
     lightPosition = [lightP[0],lightP[1],lightP[2],0.0]
     lightColor = [WHITE[0], WHITE[1], WHITE[2], 1]
 
@@ -79,7 +88,7 @@ class ScreenController(object):
     gl.glLightf(gl.GL_LIGHT0, gl.GL_CONSTANT_ATTENUATION, 0.01)
     gl.glLightf(gl.GL_LIGHT0, gl.GL_LINEAR_ATTENUATION, 0.05)"""
 
-    lightP= self.tr(-self.side/2, -self.side/2, self.side/2)
+    lightP= self.tr(-self.width/2, -self.width/2, self.width/2)
     lightPosition2 = [lightP[0],lightP[1],lightP[2],0.0]
 
     gl.glLightfv(gl.GL_LIGHT0, gl.GL_AMBIENT, gl.GLfloat_4(0.0, 1.0, 0.0, 1.0))
@@ -254,29 +263,33 @@ class ScreenController(object):
     gl.glColor4f(GREEN[0], GREEN[1], GREEN[2], 0.8)
 
     # Bottom triangle
-    self.__draw_cylinder((0, 0, 0), (0.5 * self.side, math.sqrt(0.75) * self.side, 0))
-    self.__draw_cylinder((self.side, 0, 0), (0.5 * self.side, math.sqrt(0.75) * self.side, 0))
-    self.__draw_cylinder((0, 0, 0), (self.side, 0, 0))
+    self.__draw_cylinder(self.AAA,self.ABA)
+    self.__draw_cylinder(self.ABA,self.BBA)
+    self.__draw_cylinder(self.BBA,self.ABA)
+    self.__draw_cylinder(self.ABA,self.AAA)
 
     # Top triangle
-    self.__draw_cylinder((0, 0, self.height), (0.5 * self.side, math.sqrt(0.75) * self.side, self.height))
-    self.__draw_cylinder((self.side, 0, self.height), (0.5 * self.side, math.sqrt(0.75) * self.side, self.height))
-    self.__draw_cylinder((0, 0, self.height), (self.side, 0, self.height))
+    self.__draw_cylinder(self.AAB,self.ABB)
+    self.__draw_cylinder(self.ABB,self.BBB)
+    self.__draw_cylinder(self.BBB,self.ABB)
+    self.__draw_cylinder(self.ABB,self.AAB)
 
     # Sides
-    self.__draw_cylinder((0, 0, 0), (0, 0, self.height))
-    self.__draw_cylinder((self.side, 0, 0), (self.side, 0, self.height))
-    self.__draw_cylinder((0.5 * self.side, math.sqrt(0.75) * self.side, 0), (0.5 * self.side, math.sqrt(0.75) * self.side, self.height))
+    self.__draw_cylinder(self.AAA,self.AAB)
+    self.__draw_cylinder(self.ABA,self.ABB)
+    self.__draw_cylinder(self.BBA,self.BBB)
+    self.__draw_cylinder(self.BAA,self.BAB)
 
     # Decorative spheres
 
-    self.__draw_sphere((0, 0, 0))
-    self.__draw_sphere((self.side, 0, 0))
-    self.__draw_sphere((0.5 * self.side, math.sqrt(0.75) * self.side, 0))
-    self.__draw_sphere((0, 0, self.height))
-    self.__draw_sphere((self.side, 0, self.height))
-    self.__draw_sphere((0.5 * self.side, math.sqrt(0.75) * self.side, self.height))
-
+    self.__draw_sphere(self.AAA)
+    self.__draw_sphere(self.AAB)
+    self.__draw_sphere(self.ABA)
+    self.__draw_sphere(self.ABB)
+    self.__draw_sphere(self.BAA)
+    self.__draw_sphere(self.BAB)
+    self.__draw_sphere(self.BBA)
+    self.__draw_sphere(self.BBB)
 
     # Plot the current point
 
@@ -401,7 +414,7 @@ class ScreenController(object):
   def __reshape(self, width, height):
     gl.glViewport(0, 0, width, height)
   def turn(self,theta,phi,zoom):
-    return (self.side/2+zoom*9*self.side*math.sin(theta)/2,self.side/2-zoom*9*self.side*math.cos(theta)/2,
+    return (self.width/2+zoom*9*self.width*math.sin(theta)/2,self.depth/2-zoom*9*self.depth*math.cos(theta)/2,
       self.height/2+zoom*9*self.height*math.sin(phi)/2)
   def upvector(self,p1,p2):
     if p2[2] == p1[2]:
