@@ -5,12 +5,26 @@ from sympy.solvers import solve
 from sympy import Symbol
 
 class CoordinateParser(object):
-  def __init__(self, side, height):
+  def __init__(self, height):
     super(CoordinateParser, self).__init__()
-    self.side = float(side)
     self.height = float(height)
 
-  def parse(self, da, db, dc):
+  def parse(self, pa, pb, pc, da, db, dc):
+    h = self.height
+
+    x = (-db ** 2 * pa[1] + dc ** 2 * pa[1] + pa[1] * pb[0] ** 2 + da ** 2 * pb[1] - dc ** 2 * pb[1] - pa[0] ** 2 * pb[1] - pa[1] ** 2 * pb[1] + pa[1] * pb[1] ** 2 - pa[1] * pc[0] ** 2 + pb[1] * pc[0] ** 2 - da ** 2 * pc[1] + db ** 2 * pc[1] + pa[0] ** 2 * pc[1] + pa[1] ** 2 * pc[1] - pb[0] ** 2 * pc[1] - pb[1] ** 2 * pc[1] - pa[1] * pc[1] ** 2 + pb[1] * pc[1] ** 2)/(2 * (pa[1] * pb[0] - pa[0] * pb[1] - pa[1] * pc[0] + pb[1] * pc[0] + pa[0] * pc[1] - pb[0] * pc[1]))
+
+    y = (db ** 2 * pa[0] - dc ** 2 * pa[0] - da ** 2 * pb[0] + dc ** 2 * pb[0] + pa[0] ** 2 * pb[0] + pa[1] ** 2 * pb[0] - pa[0] * pb[0] ** 2 - pa[0] * pb[1] ** 2 + da ** 2 * pc[0] - db ** 2 * pc[0] - pa[0] ** 2 * pc[0] - pa[1] ** 2 * pc[0] + pb[0] ** 2 * pc[0] + pb[1] ** 2 * pc[0] + pa[0] * pc[0] ** 2 - pb[0] * pc[0] ** 2 + pa[0] * pc[1] ** 2 - pb[0] * pc[1] ** 2)/(2 * (pa[1] * pb[0] - pa[0] * pb[1] - pa[1] * pc[0] + pb[1] * pc[0] + pa[0] * pc[1] - pb[0] * pc[1]))
+
+    delta = dc - pc[0] ** 2 - pc[1] ** 2 + 2 * pc[0] * x - x ** 2 + 2 * pc[1] * y - y ** 2
+
+    if delta < 0:
+      return None
+    else:
+      z = h - math.sqrt(delta)
+      return (x,y,z)
+
+  def parse_old(self, da, db, dc):
     l = self.side
     h = self.height
 

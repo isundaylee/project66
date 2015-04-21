@@ -30,10 +30,10 @@ class ScreenController(object):
 
   sample_commands_parsed = False
 
-  def __init__(self, side, height):
+  def __init__(self, sensors, side, height):
     super(ScreenController, self).__init__()
-    self.command_parser = CommandParser(side, height)
-    self.coordinate_parser = CoordinateParser(side, height)
+    self.command_parser = CommandParser(sensors, height)
+    self.coordinate_parser = CoordinateParser(height)
     self.side = float(side)
     self.height = float(height)
     self.phi = 0

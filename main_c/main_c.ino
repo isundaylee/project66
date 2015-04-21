@@ -47,15 +47,12 @@ int mode = POLYGON;
 
 #define clickpin 2
 #define curvepin 3
-#define resetA 4
-#define resetB 5
-#define resetC 6
-#define Atrig 7
-#define Aecho 8
-#define Btrig 11
-#define Becho 12
-#define Ctrig 0
-#define Cecho 1
+#define Atrig 0
+#define Aecho 1
+#define Btrig 4
+#define Becho 5
+#define Ctrig 7
+#define Cecho 8
 #define vibrate 9
 
 // WiFi
@@ -68,9 +65,6 @@ void setup() {
   Serial.begin(9600);
   pinMode(clickpin, INPUT);
   pinMode(curvepin, INPUT);
-  pinMode(resetA, INPUT);
-  pinMode(resetB, INPUT);
-  pinMode(resetC, INPUT);
   pinMode(Atrig, OUTPUT);
   pinMode(Aecho,INPUT);
   pinMode(Btrig, OUTPUT);

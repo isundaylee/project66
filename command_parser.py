@@ -26,10 +26,9 @@ INFINITY = 1e10
 
 class CommandParser(object):
 
-  def __init__(self, side, height):
+  def __init__(self, sensors, height):
     super(CommandParser, self).__init__()
-
-    self.side = side
+    self.sensors = sensors
     self.height = height
     self.mode = SS_POLYGON_MODE
     self.last_point = (0, 0, 0)
@@ -64,12 +63,12 @@ class CommandParser(object):
     self.dbs = []
     self.dcs = []
 
-    self.coordinate_parser = CoordinateParser(side, height)
+    self.coordinate_parser = CoordinateParser(height)
 
   def __parse_point(self, rp):
     rp = (float(rp[0]), float(rp[1]), float(rp[2]))
     p = (rp[0] / 1000.0, rp[1] / 1000.0, rp[2] / 1000.0)
-    return self.coordinate_parser.parse(float(p[0]), float(p[1]), float(p[2]))
+    return self.coordinate_parser.parse(self.sensors[0],self.sensors[1],self.sensors[2],float(p[0]), float(p[1]), float(p[2]))
 
   def fetch_and_process(self):
     commands = self.command_retriever.fetch()
