@@ -32,7 +32,7 @@ class CommandParser(object):
     super(CommandParser, self).__init__()
     self.sensors = sensors
     self.height = height
-    self.mode = SS_POLYGON_MODE
+    self.mode = self.old_mdoe = SS_POLYGON_MODE
     self.last_point = (0, 0, 0)
     self.current_points = []
     self.current_sizes = []
@@ -51,8 +51,8 @@ class CommandParser(object):
     self.extruding_polygon = None
     self.extruding_origin = None
     self.extruding_candidate = None
-    # self.command_retriever = SerialCommandRetriever(PORT)
-    self.command_retriever = WifiCommandRetriever(WIFI_IP, WIFI_PORT)
+    self.command_retriever = SerialCommandRetriever(PORT)
+    # self.command_retriever = WifiCommandRetriever(WIFI_IP, WIFI_PORT)
 
     if os.path.exists(HPORT):
       self.handle = SerialCommandRetriever(HPORT)
@@ -71,6 +71,14 @@ class CommandParser(object):
     rp = (float(rp[0]) - SENSOR_TARE + self.sensors[0][1], float(rp[1]) - SENSOR_TARE + self.sensors[1][1], float(rp[2]) - SENSOR_TARE + self.sensors[2][1])
     p = (rp[0] / 1000.0, rp[1] / 1000.0, rp[2] / 1000.0)
     return self.coordinate_parser.parse(self.sensors[0][0],self.sensors[1][0],self.sensors[2][0], float(p[0]), float(p[1]), float(p[2]))
+
+  def __reset_state(self):
+    self.current_points = []
+    self.current_sizes = []
+    self.extruding = False
+    self.extruding_polygon = None
+    self.extruding_origin = None
+    self.extruding_candidate = None
 
   def fetch_and_process(self):
     commands = self.command_retriever.fetch()
@@ -226,11 +234,11 @@ class CommandParser(object):
               self.polygons.append(p)
 
             self.extruding = False
-        else:
-          if self.extruding_candidate:
-            self.extruding_origin = self.last_point
-            self.extruding_polygon = self.extruding_candidate
-            self.extruding = True
+          else:
+            if self.extruding_candidate:
+              self.extruding_origin = self.last_point
+              self.extruding_polygon = self.extruding_candidate
+              self.extruding = True
       if nclick == -1:
         if self.mode == SS_POLYGON_MODE:
           if len(self.current_points) >= 3:
@@ -242,7 +250,11 @@ class CommandParser(object):
     elif state==1:
       self.color=(angle/10)%5
     elif state==0:
+      self.old_mode = self.mode
       self.mode=(angle/20)%4
+
+      if self.old_mode != self.mode:
+        self.__reset_state()
 
   def calculate_extrusion_extra_polygons(self, e):
     polys = []
